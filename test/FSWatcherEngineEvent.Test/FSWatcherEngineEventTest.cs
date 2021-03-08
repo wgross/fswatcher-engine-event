@@ -5,59 +5,76 @@ using System.Management.Automation;
 using System.Text.Json;
 using Xunit;
 
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerClass, DisableTestParallelization = true)]
+
 namespace FSWatcherEngineEvent.Test
 {
-    public class FSWatcherEngineEventTest
+    [Collection("powershell")]
+    public class FSWatcherEngineEventTest : IDisposable
     {
         public FSWatcherEngineEventTest()
         {
             this.PowerShell = PowerShell.Create();
 
             this.PowerShell.AddCommand("Import-Module")
-                .AddArgument(@".\FSWatcher.dll")
+                .AddArgument(@".\FSWatcherEngineEvent.dll")
                 .Invoke();
             this.PowerShell.Commands.Clear();
 
             // run each test with a clean directory
-            if (Directory.Exists(@".\watched"))
-                Directory.Delete(@".\watched", recursive: true);
-            if (Directory.Exists(@".\watched"))
-                Directory.CreateDirectory(@".\watched");
+            this.rootDirectory = Directory.CreateDirectory($@".\{this.sourceIdentifier}");
+        }
+
+        public void Dispose()
+        {
+            this.rootDirectory.Delete(recursive: true);
+            this.PowerShell.Dispose();
         }
 
         private readonly ScriptBlock SpyOnEvent = ScriptBlock.Create("$global:result = $event|ConvertTo-Json");
+        private readonly string sourceIdentifier = Guid.NewGuid().ToString();
+        private readonly DirectoryInfo rootDirectory;
+
+        private string ArrangeFilePath(string fileName) => Path.Combine(this.rootDirectory.FullName, fileName);
+
+        private void Sleep()
+        {
+            this.PowerShell.AddCommand("Start-Sleep").AddParameter("Seconds", 1).Invoke();
+            this.PowerShell.Commands.Clear();
+        }
 
         public PowerShell PowerShell { get; }
+
+        private void ArrangeEngineEvent()
+        {
+            this.PowerShell
+                .AddCommand("Register-EngineEvent")
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("Action", this.SpyOnEvent)
+                .Invoke();
+            this.PowerShell.Commands.Clear();
+        }
 
         [Fact]
         public void Notifies_on_created_file()
         {
             // ARRANGE
-            var directory = Directory.CreateDirectory(@".\watched");
-
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
-                .AddParameter("Path", directory.FullName)
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("Filters", NotifyFilters.LastWrite)
                 .Invoke();
             this.PowerShell.Commands.Clear();
-            this.PowerShell
-                .AddCommand("Register-EngineEvent")
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
-                .AddParameter("Action", this.SpyOnEvent)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
 
             // ACT
-            File.WriteAllText(@".\watched\test.txt", Guid.NewGuid().ToString());
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+            this.Sleep();
 
             // ASSERT
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell
-                .AddCommand("Start-Sleep").AddParameter("Seconds", 1)
-                .Invoke();
             this.PowerShell.Commands.Clear();
             var result = this.PowerShell
                 .AddCommand("Get-Variable")
@@ -74,7 +91,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(Path.Join(directory.FullName, "test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
             Assert.Equal("test.txt", eventJson.MessageData.Name);
         }
 
@@ -82,33 +99,24 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_changed_file()
         {
             // ARRANGE
-            var directory = Directory.CreateDirectory(@".\watched");
-            File.WriteAllText(@".\watched\test.txt", Guid.NewGuid().ToString());
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
 
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
-                .AddParameter("Path", directory.FullName)
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("Filters", NotifyFilters.LastWrite)
                 .Invoke();
             this.PowerShell.Commands.Clear();
-            this.PowerShell
-                .AddCommand("Register-EngineEvent")
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
-                .AddParameter("Action", this.SpyOnEvent)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
 
             // ACT
-            File.WriteAllText(@".\watched\test.txt", Guid.NewGuid().ToString());
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+            this.Sleep();
 
             // ASSERT
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell
-                .AddCommand("Start-Sleep").AddParameter("Seconds", 1)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
             var result = this.PowerShell
                 .AddCommand("Get-Variable")
                 .AddParameter("Name", "result")
@@ -124,7 +132,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(Path.Join(directory.FullName, "test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
             Assert.Equal("test.txt", eventJson.MessageData.Name);
         }
 
@@ -132,33 +140,25 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_renamed_file()
         {
             // ARRANGE
-            var directory = Directory.CreateDirectory(@".\watched");
-            File.WriteAllText(@".\watched\test.txt", Guid.NewGuid().ToString());
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
 
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
-                .AddParameter("Path", directory.FullName)
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("Filters", NotifyFilters.FileName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
-            this.PowerShell
-                .AddCommand("Register-EngineEvent")
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
-                .AddParameter("Action", this.SpyOnEvent)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
 
             // ACT
-            var file = new FileInfo(@".\watched\test.txt");
-            File.Move(@".\watched\test.txt", @".\watched\test-changed.txt");
+            var file = new FileInfo(this.ArrangeFilePath("test.txt"));
+            File.Move(this.ArrangeFilePath("test.txt"), this.ArrangeFilePath("test-changed.txt"));
+            this.Sleep();
 
             // ASSERT
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell
-                .AddCommand("Start-Sleep").AddParameter("Seconds", 1)
-                .Invoke();
             this.PowerShell.Commands.Clear();
             var result = this.PowerShell
                 .AddCommand("Get-Variable")
@@ -175,9 +175,9 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(Path.Join(directory.FullName, "test-changed.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test-changed.txt"), eventJson.MessageData.FullPath);
             Assert.Equal("test-changed.txt", eventJson.MessageData.Name);
-            Assert.Equal(Path.Join(directory.FullName, "test.txt"), eventJson.MessageData.OldFullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.OldFullPath);
             Assert.Equal("test.txt", eventJson.MessageData.OldName);
         }
 
@@ -185,33 +185,24 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_deleted_file()
         {
             // ARRANGE
-            var directory = Directory.CreateDirectory(@".\watched");
-            File.WriteAllText(@".\watched\test.txt", Guid.NewGuid().ToString());
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
 
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
-                .AddParameter("Path", directory.FullName)
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("Filters", NotifyFilters.FileName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
-            this.PowerShell
-                .AddCommand("Register-EngineEvent")
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
-                .AddParameter("Action", this.SpyOnEvent)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
 
             // ACT
-            File.Delete(@".\watched\test.txt");
+            File.Delete(this.ArrangeFilePath("test.txt"));
+            this.Sleep();
 
             // ASSERT
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell
-                .AddCommand("Start-Sleep").AddParameter("Seconds", 1)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
             var result = this.PowerShell
                 .AddCommand("Get-Variable")
                 .AddParameter("Name", "result")
@@ -227,7 +218,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Deleted, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(Path.Join(directory.FullName, "test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
             Assert.Equal("test.txt", eventJson.MessageData.Name);
         }
 
@@ -235,33 +226,23 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_created_directory()
         {
             // ARRANGE
-            var directory = Directory.CreateDirectory(@".\watched");
-
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
-                .AddParameter("Path", directory.FullName)
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("IncludeSubdirectories")
                 .AddParameter("Filters", NotifyFilters.DirectoryName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
-            this.PowerShell
-                .AddCommand("Register-EngineEvent")
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
-                .AddParameter("Action", this.SpyOnEvent)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
 
             // ACT
-            var subdir = Directory.CreateDirectory(Path.Join(directory.FullName, "subdir"));
+            var subdir = Directory.CreateDirectory(this.ArrangeFilePath("subdir"));
+            this.Sleep();
 
             // ASSERT
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell
-                .AddCommand("Start-Sleep").AddParameter("Seconds", 1)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
             var result = this.PowerShell
                 .AddCommand("Get-Variable")
                 .AddParameter("Name", "result")
@@ -285,34 +266,25 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_deleted_directory()
         {
             // ARRANGE
-            var directory = Directory.CreateDirectory(@".\watched");
-            var subdir = Directory.CreateDirectory(Path.Join(directory.FullName, "subdir"));
+            var subdir = Directory.CreateDirectory(this.ArrangeFilePath("subdir"));
 
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
-                .AddParameter("Path", directory.FullName)
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("IncludeSubdirectories")
                 .AddParameter("Filters", NotifyFilters.DirectoryName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
-            this.PowerShell
-                .AddCommand("Register-EngineEvent")
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
-                .AddParameter("Action", this.SpyOnEvent)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
 
             // ACT
             subdir.Delete();
+            this.Sleep();
 
             // ASSERT
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell
-                .AddCommand("Start-Sleep").AddParameter("Seconds", 1)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
             var result = this.PowerShell
                 .AddCommand("Get-Variable")
                 .AddParameter("Name", "result")
@@ -336,34 +308,25 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_renamed_directory()
         {
             // ARRANGE
-            var directory = Directory.CreateDirectory(@".\watched");
-            var subdir = Directory.CreateDirectory(Path.Join(directory.FullName, "subdir"));
+            var subdir = Directory.CreateDirectory(this.ArrangeFilePath("subdir"));
 
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
-                .AddParameter("Path", directory.FullName)
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("IncludeSubdirectories")
                 .AddParameter("Filters", NotifyFilters.DirectoryName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
-            this.PowerShell
-                .AddCommand("Register-EngineEvent")
-                .AddParameter("SourceIdentifier", "sourceIdentifier")
-                .AddParameter("Action", this.SpyOnEvent)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
 
             // ACT
-            Directory.Move(subdir.FullName, Path.Join(directory.FullName, "subdir-changed"));
+            Directory.Move(subdir.FullName, this.ArrangeFilePath("subdir-changed"));
+            this.Sleep();
 
             // ASSERT
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell
-                .AddCommand("Start-Sleep").AddParameter("Seconds", 1)
-                .Invoke();
-            this.PowerShell.Commands.Clear();
             var result = this.PowerShell
                 .AddCommand("Get-Variable")
                 .AddParameter("Name", "result")
@@ -379,9 +342,9 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(Path.Join(directory.FullName, "subdir-changed"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("subdir-changed"), eventJson.MessageData.FullPath);
             Assert.Equal("subdir-changed", eventJson.MessageData.Name);
-            Assert.Equal(Path.Join(directory.FullName, "subdir"), eventJson.MessageData.OldFullPath);
+            Assert.Equal(this.ArrangeFilePath("subdir"), eventJson.MessageData.OldFullPath);
             Assert.Equal("subdir", eventJson.MessageData.OldName);
         }
     }
