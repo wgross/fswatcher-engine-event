@@ -5,7 +5,7 @@ using System.Management.Automation;
 using System.Text.Json;
 using Xunit;
 
-[assembly: CollectionBehavior(CollectionBehavior.CollectionPerClass, DisableTestParallelization = true)]
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace FSWatcherEngineEvent.Test
 {
@@ -28,7 +28,9 @@ namespace FSWatcherEngineEvent.Test
         public void Dispose()
         {
             this.rootDirectory.Delete(recursive: true);
-            this.PowerShell.Dispose();
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Remove-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+            //this.PowerShell.Dispose();
         }
 
         private readonly ScriptBlock SpyOnEvent = ScriptBlock.Create("$global:result = $event|ConvertTo-Json");
@@ -63,12 +65,12 @@ namespace FSWatcherEngineEvent.Test
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
-                .AddParameter("Filters", NotifyFilters.LastWrite)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
                 .Invoke();
             this.PowerShell.Commands.Clear();
             this.ArrangeEngineEvent();
 
-            // ACT
+            // ACT1
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
             this.Sleep();
 
@@ -96,6 +98,96 @@ namespace FSWatcherEngineEvent.Test
         }
 
         [Fact]
+        public void Notifies_on_created_file_skipped_because_of_filter()
+        {
+            // ARRANGE
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .AddParameter("Filter", "*.jpg")
+                .Invoke();
+            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
+
+            // ACT
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+            this.Sleep();
+
+            // ASSERT
+            Assert.False(this.PowerShell.HadErrors);
+
+            this.PowerShell.Commands.Clear();
+            var result = this.PowerShell
+                .AddCommand("Get-Variable")
+                .AddParameter("Name", "result")
+                .Invoke()
+                .ToArray();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Notify_of_created_file_can_be_switched_off()
+        {
+            // ARRANGE
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .Invoke();
+            this.PowerShell.Commands.Clear();
+            this.ArrangeEngineEvent();
+            this.PowerShell
+                .AddCommand("Remove-FileSystemWatcher")
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .Invoke();
+            this.PowerShell.Commands.Clear();
+
+            // ACT
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+            this.Sleep();
+
+            // ASSERT
+            Assert.False(this.PowerShell.HadErrors);
+
+            this.PowerShell.Commands.Clear();
+            var result = this.PowerShell
+                .AddCommand("Get-Variable")
+                .AddParameter("Name", "result")
+                .Invoke()
+                .ToArray();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Watching_fails_on_invalid_path()
+        {
+            // ACT
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", "invalid-path")
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .Invoke();
+
+            // ASSERT
+            Assert.True(this.PowerShell.HadErrors);
+
+            this.PowerShell.Commands.Clear();
+            var result = this.PowerShell
+                .AddCommand("Get-Variable")
+                .AddParameter("Name", "result")
+                .Invoke()
+                .ToArray();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
         public void Notifies_on_changed_file()
         {
             // ARRANGE
@@ -105,7 +197,7 @@ namespace FSWatcherEngineEvent.Test
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
-                .AddParameter("Filters", NotifyFilters.LastWrite)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
                 .Invoke();
             this.PowerShell.Commands.Clear();
             this.ArrangeEngineEvent();
@@ -146,7 +238,7 @@ namespace FSWatcherEngineEvent.Test
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
-                .AddParameter("Filters", NotifyFilters.FileName)
+                .AddParameter("NotifyFilter", NotifyFilters.FileName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
             this.ArrangeEngineEvent();
@@ -191,7 +283,7 @@ namespace FSWatcherEngineEvent.Test
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
-                .AddParameter("Filters", NotifyFilters.FileName)
+                .AddParameter("NotifyFilter", NotifyFilters.FileName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
             this.ArrangeEngineEvent();
@@ -231,7 +323,7 @@ namespace FSWatcherEngineEvent.Test
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("IncludeSubdirectories")
-                .AddParameter("Filters", NotifyFilters.DirectoryName)
+                .AddParameter("NotifyFilter", NotifyFilters.DirectoryName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
             this.ArrangeEngineEvent();
@@ -273,7 +365,7 @@ namespace FSWatcherEngineEvent.Test
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("IncludeSubdirectories")
-                .AddParameter("Filters", NotifyFilters.DirectoryName)
+                .AddParameter("NotifyFilter", NotifyFilters.DirectoryName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
             this.ArrangeEngineEvent();
@@ -315,7 +407,7 @@ namespace FSWatcherEngineEvent.Test
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("IncludeSubdirectories")
-                .AddParameter("Filters", NotifyFilters.DirectoryName)
+                .AddParameter("NotifyFilter", NotifyFilters.DirectoryName)
                 .Invoke();
             this.PowerShell.Commands.Clear();
             this.ArrangeEngineEvent();

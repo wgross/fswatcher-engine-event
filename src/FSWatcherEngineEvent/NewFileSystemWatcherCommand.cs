@@ -17,23 +17,36 @@ namespace FSWatcherEngineEvent
         public SwitchParameter IncludeSubdirectories { get; set; }
 
         [Parameter]
-        public string Include { get; set; }
+        public string Filter { get; set; }
 
         [Parameter]
-        public NotifyFilters Filters { get; set; } = NotifyFilters.LastAccess | NotifyFilters.LastWrite;
+        public NotifyFilters NotifyFilter { get; set; } = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
 
         protected override void ProcessRecord()
         {
-            var watcher = new FileSystemWatcher();
+            var resolvedPath = this.GetUnresolvedProviderPathFromPSPath(this.Path);
 
-            watcher.Path = this.Path;
-            watcher.NotifyFilter = this.Filters;
+            if (!File.Exists(resolvedPath) && !Directory.Exists(resolvedPath))
+            {
+                this.WriteError(new ErrorRecord(
+                    exception: new PSArgumentException($"Path:{this.Path} is invalid", nameof(Path)),
+                    errorId: "path-invalid",
+                    errorCategory: ErrorCategory.InvalidArgument,
+                    targetObject: null));
+                return;
+            }
+
+            var watcher = new FileSystemWatcher
+            {
+                Path = resolvedPath,
+                NotifyFilter = this.NotifyFilter
+            };
 
             if (this.IsParameterBound(nameof(IncludeSubdirectories)))
                 watcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
 
-            if (this.IsParameterBound(nameof(Include)))
-                watcher.Filter = this.Include;
+            if (this.IsParameterBound(nameof(Filter)))
+                watcher.Filter = this.Filter;
 
             watcher.Changed += this.OnChanged;
             watcher.Created += this.OnChanged;
@@ -47,6 +60,11 @@ namespace FSWatcherEngineEvent
 
         private void OnError(object sender, ErrorEventArgs e)
         {
+            this.WriteError(new ErrorRecord(
+                exception: e.GetException(),
+                errorId: "fswatcher-failed",
+                errorCategory: ErrorCategory.InvalidOperation,
+                targetObject: sender));
         }
 
         private void OnRenamed(object sender, RenamedEventArgs e)
@@ -54,7 +72,7 @@ namespace FSWatcherEngineEvent
             this.Events.GenerateEvent(
                 sourceIdentifier: this.SourceIdentifier,
                 sender: sender,
-                args: new[] { e.FullPath },
+                args: null,
                 extraData: PSObject.AsPSObject(e));
         }
 
@@ -64,7 +82,7 @@ namespace FSWatcherEngineEvent
             this.Events.GenerateEvent(
                 sourceIdentifier: this.SourceIdentifier,
                 sender: sender,
-                args: new[] { e.FullPath },
+                args: null,
                 extraData: PSObject.AsPSObject(e));
         }
 
