@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -28,8 +29,7 @@ namespace FSWatcherEngineEvent.Test
         public void Dispose()
         {
             this.rootDirectory.Delete(recursive: true);
-            this.PowerShell.Commands.Clear();
-            this.PowerShell.AddCommand("Remove-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+            this.RemoveFileSystemWatcher();
             //this.PowerShell.Dispose();
         }
 
@@ -39,50 +39,65 @@ namespace FSWatcherEngineEvent.Test
 
         private string ArrangeFilePath(string fileName) => Path.Combine(this.rootDirectory.FullName, fileName);
 
+        private void RemoveFileSystemWatcher()
+        {
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Unregister-Event").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Remove-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+        }
+
         private void Sleep()
         {
-            this.PowerShell.AddCommand("Start-Sleep").AddParameter("Seconds", 1).Invoke();
             this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Start-Sleep").AddParameter("Seconds", 1).Invoke();
         }
 
         public PowerShell PowerShell { get; }
 
         private void ArrangeEngineEvent()
         {
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("Register-EngineEvent")
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("Action", this.SpyOnEvent)
                 .Invoke();
+        }
+
+        private Collection<PSObject> ReadResultVariable()
+        {
             this.PowerShell.Commands.Clear();
+            return this.PowerShell
+                .AddCommand("Get-Variable")
+                .AddParameter("Name", "result")
+                .Invoke();
         }
 
         [Fact]
         public void Notifies_on_created_file()
         {
             // ARRANGE
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
-            // ACT1
+            // ACT
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
-            this.Sleep();
 
             // ASSERT
-            Assert.False(this.PowerShell.HadErrors);
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
 
-            this.PowerShell.Commands.Clear();
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .Single();
+            Assert.False(this.PowerShell.HadErrors); 
+
+            PSObject result = this.ReadResultVariable().Single();
 
             Assert.IsType<PSVariable>(result.BaseObject);
 
@@ -101,6 +116,7 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_created_file_skipped_because_of_filter()
         {
             // ARRANGE
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
@@ -108,22 +124,19 @@ namespace FSWatcherEngineEvent.Test
                 .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
                 .AddParameter("Filter", "*.jpg")
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
             // ACT
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
-            this.Sleep();
 
             // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell.Commands.Clear();
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .ToArray();
+            var result = this.ReadResultVariable().ToArray();
 
             Assert.Empty(result);
         }
@@ -132,33 +145,31 @@ namespace FSWatcherEngineEvent.Test
         public void Notify_of_created_file_can_be_switched_off()
         {
             // ARRANGE
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
-            this.PowerShell
-                .AddCommand("Remove-FileSystemWatcher")
-                .AddParameter("SourceIdentifier", this.sourceIdentifier)
-                .Invoke();
+
             this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Remove-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
 
             // ACT
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
-            this.Sleep();
 
             // ASSERT
-            Assert.False(this.PowerShell.HadErrors);
+            this.Sleep();
 
             this.PowerShell.Commands.Clear();
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .ToArray();
+            this.PowerShell.AddCommand("Unregister-Event").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+
+            Assert.False(this.PowerShell.HadErrors);
+
+            var result = this.ReadResultVariable();
 
             Assert.Empty(result);
         }
@@ -167,6 +178,7 @@ namespace FSWatcherEngineEvent.Test
         public void Watching_fails_on_invalid_path()
         {
             // ACT
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", "invalid-path")
@@ -177,12 +189,7 @@ namespace FSWatcherEngineEvent.Test
             // ASSERT
             Assert.True(this.PowerShell.HadErrors);
 
-            this.PowerShell.Commands.Clear();
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .ToArray();
+            var result = this.ReadResultVariable().ToArray();
 
             Assert.Empty(result);
         }
@@ -193,27 +200,26 @@ namespace FSWatcherEngineEvent.Test
             // ARRANGE
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
 
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
             // ACT
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
-            this.Sleep();
 
             // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
             Assert.False(this.PowerShell.HadErrors);
 
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .Single();
+            var result = this.ReadResultVariable().Single();
 
             Assert.IsType<PSVariable>(result.BaseObject);
 
@@ -234,29 +240,27 @@ namespace FSWatcherEngineEvent.Test
             // ARRANGE
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
 
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("NotifyFilter", NotifyFilters.FileName)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
             // ACT
             var file = new FileInfo(this.ArrangeFilePath("test.txt"));
             File.Move(this.ArrangeFilePath("test.txt"), this.ArrangeFilePath("test-changed.txt"));
-            this.Sleep();
 
             // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
             Assert.False(this.PowerShell.HadErrors);
 
-            this.PowerShell.Commands.Clear();
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .Single();
+            var result = this.ReadResultVariable().Single();
 
             Assert.IsType<PSVariable>(result.BaseObject);
 
@@ -279,27 +283,26 @@ namespace FSWatcherEngineEvent.Test
             // ARRANGE
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
 
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
                 .AddParameter("SourceIdentifier", this.sourceIdentifier)
                 .AddParameter("NotifyFilter", NotifyFilters.FileName)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
             // ACT
             File.Delete(this.ArrangeFilePath("test.txt"));
-            this.Sleep();
 
             // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
             Assert.False(this.PowerShell.HadErrors);
 
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .Single();
+            var result = this.ReadResultVariable().Single();
 
             Assert.IsType<PSVariable>(result.BaseObject);
 
@@ -318,6 +321,7 @@ namespace FSWatcherEngineEvent.Test
         public void Notifies_on_created_directory()
         {
             // ARRANGE
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
@@ -325,21 +329,19 @@ namespace FSWatcherEngineEvent.Test
                 .AddParameter("IncludeSubdirectories")
                 .AddParameter("NotifyFilter", NotifyFilters.DirectoryName)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
             // ACT
             var subdir = Directory.CreateDirectory(this.ArrangeFilePath("subdir"));
-            this.Sleep();
 
             // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
             Assert.False(this.PowerShell.HadErrors);
 
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .Single();
+            var result = this.ReadResultVariable().Single();
 
             Assert.IsType<PSVariable>(result.BaseObject);
 
@@ -360,6 +362,7 @@ namespace FSWatcherEngineEvent.Test
             // ARRANGE
             var subdir = Directory.CreateDirectory(this.ArrangeFilePath("subdir"));
 
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
@@ -367,21 +370,19 @@ namespace FSWatcherEngineEvent.Test
                 .AddParameter("IncludeSubdirectories")
                 .AddParameter("NotifyFilter", NotifyFilters.DirectoryName)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
             // ACT
             subdir.Delete();
-            this.Sleep();
 
             // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
             Assert.False(this.PowerShell.HadErrors);
 
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .Single();
+            var result = this.ReadResultVariable().Single();
 
             Assert.IsType<PSVariable>(result.BaseObject);
 
@@ -402,6 +403,7 @@ namespace FSWatcherEngineEvent.Test
             // ARRANGE
             var subdir = Directory.CreateDirectory(this.ArrangeFilePath("subdir"));
 
+            this.PowerShell.Commands.Clear();
             this.PowerShell
                 .AddCommand("New-FileSystemWatcher")
                 .AddParameter("Path", this.rootDirectory.FullName)
@@ -409,21 +411,19 @@ namespace FSWatcherEngineEvent.Test
                 .AddParameter("IncludeSubdirectories")
                 .AddParameter("NotifyFilter", NotifyFilters.DirectoryName)
                 .Invoke();
-            this.PowerShell.Commands.Clear();
+
             this.ArrangeEngineEvent();
 
             // ACT
             Directory.Move(subdir.FullName, this.ArrangeFilePath("subdir-changed"));
-            this.Sleep();
 
             // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
             Assert.False(this.PowerShell.HadErrors);
 
-            var result = this.PowerShell
-                .AddCommand("Get-Variable")
-                .AddParameter("Name", "result")
-                .Invoke()
-                .Single();
+            var result = this.ReadResultVariable().Single();
 
             Assert.IsType<PSVariable>(result.BaseObject);
 
