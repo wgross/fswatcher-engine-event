@@ -36,54 +36,19 @@ namespace FSWatcherEngineEvent
                 return;
             }
 
-            var watcher = new FileSystemWatcher
+            var filesystemWatcher = new FileSystemWatcher
             {
                 Path = resolvedPath,
                 NotifyFilter = this.NotifyFilter
             };
 
             if (this.IsParameterBound(nameof(IncludeSubdirectories)))
-                watcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
+                filesystemWatcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
 
             if (this.IsParameterBound(nameof(Filter)))
-                watcher.Filter = this.Filter;
+                filesystemWatcher.Filter = this.Filter;
 
-            watcher.Changed += this.OnChanged;
-            watcher.Created += this.OnChanged;
-            watcher.Deleted += this.OnChanged;
-            watcher.Renamed += this.OnRenamed;
-            watcher.Error += this.OnError;
-
-            // Begin watching.
-            this.StartWatching(this.SourceIdentifier, watcher);
-        }
-
-        private void OnError(object sender, ErrorEventArgs e)
-        {
-            this.WriteError(new ErrorRecord(
-                exception: e.GetException(),
-                errorId: "fswatcher-failed",
-                errorCategory: ErrorCategory.InvalidOperation,
-                targetObject: sender));
-        }
-
-        private void OnRenamed(object sender, RenamedEventArgs e)
-        {
-            this.Events.GenerateEvent(
-                sourceIdentifier: this.SourceIdentifier,
-                sender: sender,
-                args: null,
-                extraData: PSObject.AsPSObject(e));
-        }
-
-        // Define the event handlers.
-        private void OnChanged(object sender, FileSystemEventArgs e)
-        {
-            this.Events.GenerateEvent(
-                sourceIdentifier: this.SourceIdentifier,
-                sender: sender,
-                args: null,
-                extraData: PSObject.AsPSObject(e));
+            this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, filesystemWatcher));
         }
 
         protected bool IsParameterBound(string parameterName) => this.MyInvocation.BoundParameters.ContainsKey(parameterName);

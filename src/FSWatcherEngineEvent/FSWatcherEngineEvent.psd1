@@ -9,5 +9,11 @@
         'New-FileSystemWatcher'
         'Remove-FileSystemWatcher'
     )
+    PrivateData = @{
+        PSData = @{
+            LicenseUri = 'https://github.com/wgross/fswatcher-engine-event/blob/97e24092bdf6fc52165c5f118c26cfb3634031af/LICENSE'
+            ProjectUri = 'https://github.com/wgross/fswatcher-engine-event'
+        }
+    }
 }
 

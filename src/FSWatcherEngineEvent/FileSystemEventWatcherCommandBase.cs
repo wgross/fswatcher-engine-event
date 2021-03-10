@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Management.Automation;
 
 namespace FSWatcherEngineEvent
 {
     public abstract class FileSystemEventWatcherCommandBase : PSCmdlet
     {
-        protected static Dictionary<string, FileSystemWatcher> FileSystemWatchers { get; } = new();
+        protected static Dictionary<string, FileSystemWatcherSubscription> FileSystemWatchers { get; } = new();
 
-        protected void StartWatching(string sourcesIdentifier, FileSystemWatcher watcher)
+        protected void StartWatching(FileSystemWatcherSubscription fileSystemWatcherSubscription)
         {
-            FileSystemWatchers.Add(sourcesIdentifier, watcher);
-            watcher.EnableRaisingEvents = true;
+            FileSystemWatchers.Add(fileSystemWatcherSubscription.SourceIdentifier, fileSystemWatcherSubscription);
+            fileSystemWatcherSubscription.StartWatching();
         }
 
         protected void StopWatching(string sourceIdentifier)
@@ -20,8 +19,7 @@ namespace FSWatcherEngineEvent
             {
                 FileSystemWatchers.Remove(sourceIdentifier);
 
-                watcher.EnableRaisingEvents = false;
-                watcher.Dispose();
+                watcher.StopWatching();
             }
         }
     }
