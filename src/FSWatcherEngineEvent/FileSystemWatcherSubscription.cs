@@ -28,6 +28,11 @@ namespace FSWatcherEngineEvent
             this.fileSystemWatcher.EnableRaisingEvents = true;
         }
 
+        internal void SuspendWatching()
+        {
+            this.fileSystemWatcher.EnableRaisingEvents = false;
+        }
+
         internal void StopWatching()
         {
             this.fileSystemWatcher.EnableRaisingEvents = false;

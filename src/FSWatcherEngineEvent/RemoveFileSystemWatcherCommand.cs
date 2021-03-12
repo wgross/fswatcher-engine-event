@@ -1,17 +1,11 @@
-﻿using System.Management.Automation;
+﻿using System.IO;
+using System.Management.Automation;
 
 namespace FSWatcherEngineEvent
 {
-    [Cmdlet(VerbsCommon.Remove, "FileSystemWatcher")]
+    [Cmdlet(VerbsCommon.Remove, nameof(FileSystemWatcher))]
     public sealed class RemoveFileSystemWatcherCommand : FileSystemEventWatcherCommandBase
     {
-        [Parameter(Mandatory = true, Position = 0)]
-        [ValidateNotNullOrEmpty]
-        public string SourceIdentifier { get; set; }
-
-        protected override void ProcessRecord()
-        {
-            this.StopWatching(this.SourceIdentifier);
-        }
+        protected override void ProcessRecord() => this.StopWatching(this.SourceIdentifier);
     }
 }

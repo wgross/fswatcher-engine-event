@@ -3,15 +3,11 @@ using System.Management.Automation;
 
 namespace FSWatcherEngineEvent
 {
-    [Cmdlet(VerbsCommon.New, "FileSystemWatcher")]
+    [Cmdlet(VerbsCommon.New, nameof(FileSystemWatcher))]
     public class NewFileSystemWatcherCommand : FileSystemEventWatcherCommandBase
     {
-        [Parameter(Mandatory = true, ValueFromPipeline = true, Position = 0)]
+        [Parameter(Mandatory = true, ValueFromPipeline = true, Position = 1)]
         public string Path { get; set; }
-
-        [Parameter(Mandatory = true, ValueFromPipeline = true, Position = 0)]
-        [ValidateNotNullOrEmpty]
-        public string SourceIdentifier { get; set; }
 
         [Parameter()]
         public SwitchParameter IncludeSubdirectories { get; set; }

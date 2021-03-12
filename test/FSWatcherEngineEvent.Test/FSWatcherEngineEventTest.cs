@@ -18,7 +18,7 @@ namespace FSWatcherEngineEvent.Test
             this.PowerShell = PowerShell.Create();
 
             this.PowerShell.AddCommand("Import-Module")
-                .AddArgument(@".\FSWatcherEngineEvent.dll")
+                .AddArgument(@".\FSWatcherEngineEvent.psd1")
                 .Invoke();
             this.PowerShell.Commands.Clear();
 
@@ -95,7 +95,7 @@ namespace FSWatcherEngineEvent.Test
             this.Sleep();
             this.RemoveFileSystemWatcher();
 
-            Assert.False(this.PowerShell.HadErrors); 
+            Assert.False(this.PowerShell.HadErrors);
 
             PSObject result = this.ReadResultVariable().Single();
 
@@ -157,6 +157,39 @@ namespace FSWatcherEngineEvent.Test
 
             this.PowerShell.Commands.Clear();
             this.PowerShell.AddCommand("Remove-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+
+            // ACT
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+            // ASSERT
+            this.Sleep();
+
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Unregister-Event").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+
+            Assert.False(this.PowerShell.HadErrors);
+
+            var result = this.ReadResultVariable();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Notify_of_created_file_can_be_suspended()
+        {
+            // ARRANGE
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .Invoke();
+
+            this.ArrangeEngineEvent();
+
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Suspend-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
 
             // ACT
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());

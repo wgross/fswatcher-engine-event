@@ -8,6 +8,7 @@
     CmdletsToExport = @(
         'New-FileSystemWatcher'
         'Remove-FileSystemWatcher'
+        'Suspend-FileSystemWatcher'
     )
     PrivateData = @{
         PSData = @{
