@@ -188,10 +188,10 @@ namespace FSWatcherEngineEvent.Test
 
             this.ArrangeEngineEvent();
 
+            // ACT
             this.PowerShell.Commands.Clear();
             this.PowerShell.AddCommand("Suspend-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
 
-            // ACT
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
 
             // ASSERT
@@ -205,6 +205,52 @@ namespace FSWatcherEngineEvent.Test
             var result = this.ReadResultVariable();
 
             Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Notify_of_created_file_can_be_resumed()
+        {
+            // ARRANGE
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .Invoke();
+
+            this.ArrangeEngineEvent();
+
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Suspend-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+
+            // ACT
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Resume-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+            // ASSERT
+            this.Sleep();
+
+            this.PowerShell.Commands.Clear();
+            this.PowerShell.AddCommand("Unregister-Event").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+
+            Assert.False(this.PowerShell.HadErrors);
+
+            PSObject result = this.ReadResultVariable().Single();
+
+            Assert.IsType<PSVariable>(result.BaseObject);
+
+            var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+
+            Assert.NotNull(resultValue);
+
+            var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
+
+            Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal("test.txt", eventJson.MessageData.Name);
         }
 
         [Fact]

@@ -6,6 +6,20 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup Label="FineCodeCoverage">
+    <Enabled>True</Enabled>
+    <Exclude>
+      [Microsoft.*]*
+      [System.*]*
+    </Exclude>
+    <Include>[*]*</Include>
+    <ExcludeByFile></ExcludeByFile>
+    <ExcludeByAttribute></ExcludeByAttribute>
+    <IncludeTestAssembly>
+      True
+    </IncludeTestAssembly>
+  </PropertyGroup>
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
     <PackageReference Include="xunit" Version="2.4.1" />

@@ -3,7 +3,7 @@ using System.Management.Automation;
 
 namespace FSWatcherEngineEvent
 {
-    public abstract class FileSystemEventWatcherCommandBase : PSCmdlet
+    public abstract class FileSystemWatcherCommandBase : PSCmdlet
     {
         [Parameter(
             Position = 0,
@@ -36,6 +36,14 @@ namespace FSWatcherEngineEvent
             if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
             {
                 watcher.SuspendWatching();
+            }
+        }
+
+        protected void ResumeWatching(string sourceIdentifier)
+        {
+            if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
+            {
+                watcher.ResumeWatching();
             }
         }
     }

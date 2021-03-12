@@ -4,18 +4,22 @@ using System.Management.Automation;
 namespace FSWatcherEngineEvent
 {
     [Cmdlet(VerbsCommon.New, nameof(FileSystemWatcher))]
-    public class NewFileSystemWatcherCommand : FileSystemEventWatcherCommandBase
+    public class NewFileSystemWatcherCommand : FileSystemWatcherCommandBase
     {
-        [Parameter(Mandatory = true, ValueFromPipeline = true, Position = 1)]
+        [Parameter(
+            Mandatory = true,
+            ValueFromPipeline = true,
+            Position = 1,
+            HelpMessage = "File or directory to watch")]
         public string Path { get; set; }
 
-        [Parameter()]
+        [Parameter(HelpMessage = "Watch in subdirectories of $Path as well")]
         public SwitchParameter IncludeSubdirectories { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Wildcard of files and directory names to include")]
         public string Filter { get; set; }
 
-        [Parameter]
+        [Parameter(HelpMessage = "Type of change to watch for")]
         public NotifyFilters NotifyFilter { get; set; } = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
 
         protected override void ProcessRecord()

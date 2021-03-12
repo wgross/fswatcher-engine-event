@@ -28,10 +28,7 @@ namespace FSWatcherEngineEvent
             this.fileSystemWatcher.EnableRaisingEvents = true;
         }
 
-        internal void SuspendWatching()
-        {
-            this.fileSystemWatcher.EnableRaisingEvents = false;
-        }
+        internal void SuspendWatching() => this.fileSystemWatcher.EnableRaisingEvents = false;
 
         internal void StopWatching()
         {
@@ -43,6 +40,8 @@ namespace FSWatcherEngineEvent
             this.fileSystemWatcher.Error -= this.OnError;
             this.fileSystemWatcher.Dispose();
         }
+
+        internal void ResumeWatching() => this.fileSystemWatcher.EnableRaisingEvents = true;
 
         private void OnError(object sender, ErrorEventArgs e)
         {
