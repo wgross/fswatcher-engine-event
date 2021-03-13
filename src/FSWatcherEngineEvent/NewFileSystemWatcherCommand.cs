@@ -4,6 +4,7 @@ using System.Management.Automation;
 namespace FSWatcherEngineEvent
 {
     [Cmdlet(VerbsCommon.New, nameof(FileSystemWatcher))]
+    [OutputType(typeof(FileSystemWatcherState))]
     public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     {
         [Parameter(
@@ -48,7 +49,9 @@ namespace FSWatcherEngineEvent
             if (this.IsParameterBound(nameof(Filter)))
                 filesystemWatcher.Filter = this.Filter;
 
-            this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, filesystemWatcher));
+            this.WriteFileSystemWatcherState(
+                this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, filesystemWatcher))
+            );
         }
 
         protected bool IsParameterBound(string parameterName) => this.MyInvocation.BoundParameters.ContainsKey(parameterName);

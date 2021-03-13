@@ -5,39 +5,66 @@ namespace FSWatcherEngineEvent
 {
     public abstract class FileSystemWatcherCommandBase : PSCmdlet
     {
-        
         protected static Dictionary<string, FileSystemWatcherSubscription> FileSystemWatchers { get; } = new();
 
-        protected void StartWatching(FileSystemWatcherSubscription fileSystemWatcherSubscription)
+        protected FileSystemWatcherState StartWatching(FileSystemWatcherSubscription fileSystemWatcherSubscription)
         {
             FileSystemWatchers.Add(fileSystemWatcherSubscription.SourceIdentifier, fileSystemWatcherSubscription);
             fileSystemWatcherSubscription.StartWatching();
+            return ConvertToFileSystemWatcherInfo(fileSystemWatcherSubscription);
         }
 
-        protected void StopWatching(string sourceIdentifier)
+        protected FileSystemWatcherState StopWatching(string sourceIdentifier)
         {
             if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
             {
                 FileSystemWatchers.Remove(sourceIdentifier);
 
                 watcher.StopWatching();
+                return ConvertToFileSystemWatcherInfo(watcher);
             }
+            return null;
         }
 
-        protected void SuspendWatching(string sourceIdentifier)
+        protected FileSystemWatcherState SuspendWatching(string sourceIdentifier)
         {
             if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
             {
                 watcher.SuspendWatching();
+                return ConvertToFileSystemWatcherInfo(watcher);
             }
+            return null;
         }
 
-        protected void ResumeWatching(string sourceIdentifier)
+        protected FileSystemWatcherState ResumeWatching(string sourceIdentifier)
         {
             if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
             {
                 watcher.ResumeWatching();
+                return ConvertToFileSystemWatcherInfo(watcher);
             }
+            return null;
+        }
+
+        protected void WriteFileSystemWatcherState(FileSystemWatcherState fileSystemWatcherState)
+        {
+            if (fileSystemWatcherState is null)
+                this.WriteObject(fileSystemWatcherState);
+        }
+
+        protected static FileSystemWatcherState ConvertToFileSystemWatcherInfo(KeyValuePair<string, FileSystemWatcherSubscription> fsw) => ConvertToFileSystemWatcherInfo(fsw.Value);
+
+        protected static FileSystemWatcherState ConvertToFileSystemWatcherInfo(FileSystemWatcherSubscription fsw)
+        {
+            return new FileSystemWatcherState
+            {
+                SourceIdentifier = fsw.SourceIdentifier,
+                Path = fsw.Path,
+                NotifyFilter = fsw.NotifyFilter,
+                EnableRaisingEvents = fsw.EnableRaisingEvents,
+                IncludeSubdirectories = fsw.IncludeSubdirectories,
+                Filter = fsw.Filter
+            };
         }
     }
 }
