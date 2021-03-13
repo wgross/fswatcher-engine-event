@@ -113,6 +113,42 @@ namespace FSWatcherEngineEvent.Test
         }
 
         [Fact]
+        public void Reads_file_system_watcher_state()
+        {
+            // ARRANGE
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .Invoke();
+
+            this.ArrangeEngineEvent();
+
+            // ACT
+
+            this.PowerShell.Commands.Clear();
+            var result = this.PowerShell
+                .AddCommand("Get-FileSystemWatcher")
+                .Invoke()
+                .Single();
+
+            // ASSERT
+            this.RemoveFileSystemWatcher();
+
+            Assert.False(this.PowerShell.HadErrors);
+
+            Assert.IsType<FileSystemWatcherState>(result.BaseObject);
+            Assert.Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)));
+            Assert.Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
+            Assert.Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
+            Assert.Equal("*", result.Property<string>(nameof(FileSystemWatcherState.Filter)));
+            Assert.True(result.Property<bool>(nameof(FileSystemWatcherState.EnableRaisingEvents)));
+            Assert.False(result.Property<bool>(nameof(FileSystemWatcherState.IncludeSubdirectories)));
+        }
+
+        [Fact]
         public void Notifies_on_created_file_skipped_because_of_filter()
         {
             // ARRANGE

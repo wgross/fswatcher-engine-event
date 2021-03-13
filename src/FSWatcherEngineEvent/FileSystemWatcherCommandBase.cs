@@ -5,14 +5,7 @@ namespace FSWatcherEngineEvent
 {
     public abstract class FileSystemWatcherCommandBase : PSCmdlet
     {
-        [Parameter(
-            Position = 0,
-            Mandatory = true,
-            ValueFromPipelineByPropertyName = true,
-            HelpMessage = "Unique name of the event associated with the file system watcher")]
-        [ValidateNotNullOrEmpty]
-        public string SourceIdentifier { get; set; }
-
+        
         protected static Dictionary<string, FileSystemWatcherSubscription> FileSystemWatchers { get; } = new();
 
         protected void StartWatching(FileSystemWatcherSubscription fileSystemWatcherSubscription)

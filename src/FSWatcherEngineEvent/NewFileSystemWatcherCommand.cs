@@ -4,7 +4,7 @@ using System.Management.Automation;
 namespace FSWatcherEngineEvent
 {
     [Cmdlet(VerbsCommon.New, nameof(FileSystemWatcher))]
-    public class NewFileSystemWatcherCommand : FileSystemWatcherCommandBase
+    public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     {
         [Parameter(
             Mandatory = true,

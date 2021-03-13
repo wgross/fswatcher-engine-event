@@ -6,6 +6,12 @@ namespace FSWatcherEngineEvent
     public sealed class FileSystemWatcherSubscription
     {
         internal string SourceIdentifier { get; }
+        internal string Path => this.fileSystemWatcher.Path;
+        internal NotifyFilters NotifyFilter => this.fileSystemWatcher.NotifyFilter;
+        internal bool EnableRaisingEvents => this.fileSystemWatcher.EnableRaisingEvents;
+        internal bool IncludeSubdirectories => this.fileSystemWatcher.IncludeSubdirectories;
+        internal string Filter => this.fileSystemWatcher.Filter;
+
         private readonly PSEventManager psEventManager;
         private readonly ICommandRuntime commandRuntime;
         private readonly FileSystemWatcher fileSystemWatcher;
