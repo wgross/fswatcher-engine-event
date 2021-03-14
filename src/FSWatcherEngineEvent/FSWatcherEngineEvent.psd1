@@ -5,6 +5,7 @@
     Author = 'github.com/wgross'
     Copyright = '(c) github.com/wgross. All rights reserved.'
     Description = 'Provide file system change notifications as powershell engine events'
+    PowershellHostVersion="7.1"
     CmdletsToExport = @(
         'New-FileSystemWatcher'
         'Remove-FileSystemWatcher'
