@@ -5,7 +5,7 @@ namespace FSWatcherEngineEvent
 {
     public abstract class FileSystemWatcherCommandBase : PSCmdlet
     {
-        protected static Dictionary<string, FileSystemWatcherSubscription> FileSystemWatchers { get; } = new();
+        protected static Dictionary<string, FileSystemWatcherSubscription> FileSystemWatchers { get; } = new Dictionary<string, FileSystemWatcherSubscription>();
 
         protected FileSystemWatcherState StartWatching(FileSystemWatcherSubscription fileSystemWatcherSubscription)
         {
@@ -56,15 +56,14 @@ namespace FSWatcherEngineEvent
 
         protected static FileSystemWatcherState ConvertToFileSystemWatcherInfo(FileSystemWatcherSubscription fsw)
         {
-            return new FileSystemWatcherState
-            {
-                SourceIdentifier = fsw.SourceIdentifier,
-                Path = fsw.Path,
-                NotifyFilter = fsw.NotifyFilter,
-                EnableRaisingEvents = fsw.EnableRaisingEvents,
-                IncludeSubdirectories = fsw.IncludeSubdirectories,
-                Filter = fsw.Filter
-            };
+            return new FileSystemWatcherState(
+                fsw.SourceIdentifier,
+                fsw.Path,
+                fsw.NotifyFilter,
+                fsw.EnableRaisingEvents,
+                fsw.IncludeSubdirectories,
+                fsw.Filter
+            );
         }
     }
 }

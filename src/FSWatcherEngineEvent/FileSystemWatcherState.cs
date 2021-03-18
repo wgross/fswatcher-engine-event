@@ -2,13 +2,30 @@
 
 namespace FSWatcherEngineEvent
 {
-    public record FileSystemWatcherState
+    public class FileSystemWatcherState
     {
-        public string SourceIdentifier { get; init; }
-        public string Path { get; init; }
-        public NotifyFilters NotifyFilter { get; init; }
-        public bool EnableRaisingEvents { get; init; }
-        public bool IncludeSubdirectories { get; init; }
-        public string Filter { get; init; }
+        public FileSystemWatcherState(
+            string sourceIdentifier,
+            string path,
+            NotifyFilters notifyFilters,
+            bool enableRaisingEvents,
+            bool includeSubdirectories,
+            string filter
+        )
+        {
+            this.SourceIdentifier = sourceIdentifier;
+            this.Path = path;
+            this.NotifyFilter = notifyFilters;
+            this.EnableRaisingEvents = enableRaisingEvents;
+            this.IncludeSubdirectories = includeSubdirectories;
+            this.Filter = filter;
+        }
+
+        public string SourceIdentifier { get; }
+        public string Path { get; }
+        public NotifyFilters NotifyFilter { get; }
+        public bool EnableRaisingEvents { get; }
+        public bool IncludeSubdirectories { get; }
+        public string Filter { get; }
     }
 }
