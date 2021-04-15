@@ -4,6 +4,14 @@ is a powershell module which notifies of filesystem changes using a Powershell e
 
 A new event handler can be created with the cmdlet New-FileSystemWatcher:
 
+## How to Install
+
+FSWatcherEngineEvent is published to the [Powershell Gallery](https://www.powershellgallery.com/packages/FSWatcherEngineEvent). To Install it locally you can user PowerShellGets ```Install-Module``` command:
+
+```powershell
+Install-Module -Name FSWatcherEngineEvent	
+```
+
 ## Watch for changes and receive the event
 
 ```powershell
