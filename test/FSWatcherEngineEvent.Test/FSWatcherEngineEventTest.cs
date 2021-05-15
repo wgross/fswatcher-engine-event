@@ -140,7 +140,7 @@ namespace FSWatcherEngineEvent.Test
             Assert.False(this.PowerShell.HadErrors);
 
             Assert.IsType<FileSystemWatcherState>(result.BaseObject);
-            Assert.Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)));
+            Assert.Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)), ignoreCase: true);
             Assert.Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
             Assert.Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
             Assert.Equal("*", result.Property<string>(nameof(FileSystemWatcherState.Filter)));
@@ -285,7 +285,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
             Assert.Equal("test.txt", eventJson.MessageData.Name);
         }
 
@@ -345,7 +345,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
             Assert.Equal("test.txt", eventJson.MessageData.Name);
         }
 
@@ -386,9 +386,9 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(this.ArrangeFilePath("test-changed.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test-changed.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
             Assert.Equal("test-changed.txt", eventJson.MessageData.Name);
-            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.OldFullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.OldFullPath, ignoreCase: true);
             Assert.Equal("test.txt", eventJson.MessageData.OldName);
         }
 
@@ -428,7 +428,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Deleted, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
             Assert.Equal("test.txt", eventJson.MessageData.Name);
         }
 
@@ -467,7 +467,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Created, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(subdir.FullName, eventJson.MessageData.FullPath);
+            Assert.Equal(subdir.FullName, eventJson.MessageData.FullPath, ignoreCase: true);
             Assert.Equal(subdir.Name, eventJson.MessageData.Name);
         }
 
@@ -508,7 +508,7 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Deleted, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(subdir.FullName, eventJson.MessageData.FullPath);
+            Assert.Equal(subdir.FullName, eventJson.MessageData.FullPath, ignoreCase: true);
             Assert.Equal(subdir.Name, eventJson.MessageData.Name);
         }
 
@@ -549,9 +549,9 @@ namespace FSWatcherEngineEvent.Test
             var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
             Assert.Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-            Assert.Equal(this.ArrangeFilePath("subdir-changed"), eventJson.MessageData.FullPath);
+            Assert.Equal(this.ArrangeFilePath("subdir-changed"), eventJson.MessageData.FullPath, ignoreCase: true);
             Assert.Equal("subdir-changed", eventJson.MessageData.Name);
-            Assert.Equal(this.ArrangeFilePath("subdir"), eventJson.MessageData.OldFullPath);
+            Assert.Equal(this.ArrangeFilePath("subdir"), eventJson.MessageData.OldFullPath, ignoreCase: true);
             Assert.Equal("subdir", eventJson.MessageData.OldName);
         }
     }
