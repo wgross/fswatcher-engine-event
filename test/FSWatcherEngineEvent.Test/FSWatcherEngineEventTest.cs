@@ -303,6 +303,35 @@ namespace FSWatcherEngineEvent.Test
 
             // ASSERT
             Assert.True(this.PowerShell.HadErrors);
+            Assert.Equal("path-invalid,FSWatcherEngineEvent.NewFileSystemWatcherCommand", this.PowerShell.Streams.Error.Single().FullyQualifiedErrorId);
+
+            var result = this.ReadResultVariable().ToArray();
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public void Watching_fails_on_duplicate_path_and_sourceidentifier()
+        {
+            // ARRANGE
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+               .AddCommand("New-FileSystemWatcher")
+               .AddParameter("Path", this.rootDirectory.FullName)
+               .AddParameter("SourceIdentifier", this.sourceIdentifier)
+               .Invoke();
+
+            // ACT
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+               .AddCommand("New-FileSystemWatcher")
+               .AddParameter("Path", this.rootDirectory.FullName)
+               .AddParameter("SourceIdentifier", this.sourceIdentifier)
+               .Invoke();
+
+            // ASSERT
+            Assert.True(this.PowerShell.HadErrors);
+            Assert.Equal("subscriptionidentifier-duplicate,FSWatcherEngineEvent.NewFileSystemWatcherCommand", this.PowerShell.Streams.Error.Single().FullyQualifiedErrorId);
 
             var result = this.ReadResultVariable().ToArray();
 

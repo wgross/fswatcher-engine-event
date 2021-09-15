@@ -48,13 +48,27 @@ namespace FSWatcherEngineEvent
             if (provider.ImplementingType != typeof(FileSystemProvider))
                 throw new PSNotSupportedException($"FileSystemWatcher doesn't work for cmdlet providers of type {provider.ImplementingType}");
 
+            // accept only watchers for existing directories or files
             if (!File.Exists(resolvedPath) && !Directory.Exists(resolvedPath))
             {
                 this.WriteError(new ErrorRecord(
                     exception: new PSArgumentException($"Path: {selectPath()} is invalid", this.ParameterSetName),
                     errorId: "path-invalid",
                     errorCategory: ErrorCategory.InvalidArgument,
-                    targetObject: null));
+                    targetObject: default));
+
+                return;
+            }
+
+            // a sourceidentifier must be unique
+            if (FileSystemWatchers.TryGetValue(this.SourceIdentifier, out var fileSystemWatcher))
+            {
+                this.WriteError(new ErrorRecord(
+                    exception: new PSArgumentException($"Source identifier '{this.SourceIdentifier}' is already watching path '{fileSystemWatcher.Path}'"),
+                    errorId: "subscriptionidentifier-duplicate",
+                    errorCategory: ErrorCategory.InvalidArgument,
+                    targetObject: default));
+
                 return;
             }
 
