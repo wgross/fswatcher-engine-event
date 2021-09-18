@@ -115,7 +115,5 @@ namespace FSWatcherEngineEvent
 
             return true;
         }
-
-        protected bool IsParameterBound(string parameterName) => this.MyInvocation.BoundParameters.ContainsKey(parameterName);
     }
 }

@@ -229,7 +229,11 @@ namespace FSWatcherEngineEvent.Test
             this.ArrangeEngineEvent();
 
             this.PowerShell.Commands.Clear();
-            this.PowerShell.AddCommand("Remove-FileSystemWatcher").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+            this.PowerShell
+                .AddCommand("Remove-FileSystemWatcher")
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("UnregisterAll")
+                .Invoke();
 
             // ACT
             File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
@@ -238,9 +242,10 @@ namespace FSWatcherEngineEvent.Test
             this.Sleep();
 
             this.PowerShell.Commands.Clear();
-            this.PowerShell.AddCommand("Unregister-Event").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
+            this.PowerShell.AddCommand("Get-EventSubscriber").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
 
-            Assert.False(this.PowerShell.HadErrors);
+            Assert.True(this.PowerShell.HadErrors);
+            Assert.Equal($"Event subscription with source identifier '{this.sourceIdentifier}' does not exist.", this.PowerShell.Streams.Error.ReadAll().Single().ToString());
 
             var result = this.ReadResultVariable();
 

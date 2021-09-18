@@ -1,6 +1,6 @@
 @{
     RootModule = 'FSWatcherEngineEvent.dll'
-    ModuleVersion = '1.0'
+    ModuleVersion = '1.2'
     GUID = 'cea9a314-3e4c-4080-9a0b-5a867efa61f3'
     Author = 'github.com/wgross'
     Copyright = '(c) github.com/wgross. All rights reserved.'
@@ -20,6 +20,7 @@
             ProjectUri = 'https://github.com/wgross/fswatcher-engine-event'
             ReleaseNotes = @"
             1.1: compatibility with netstandard2.0 (PowerShell 5.x)
+            1.2: shortcuts the (un-)register event handlers when creating and removing file system watchers.
 "@
         }
     }
