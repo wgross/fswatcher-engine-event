@@ -36,6 +36,10 @@ namespace FSWatcherEngineEvent
         [Parameter(HelpMessage = "Type of change to watch for")]
         public NotifyFilters NotifyFilter { get; set; } = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
 
+        [Parameter(HelpMessage = "Scriptblock to handle filesystem watcher events")]
+        [ValidateNotNullOrEmpty()]
+        public ScriptBlock Action { get; set; }
+
         protected override void ProcessRecord()
         {
             string selectPath() => nameof(Path).Equals(this.ParameterSetName) ? this.Path : this.LiteralPath;
@@ -60,6 +64,27 @@ namespace FSWatcherEngineEvent
                 return;
             }
 
+            if (this.TryCreateFileSystemWatcher(resolvedPath))  // creation of the file system watcher was successful
+                if (this.IsParameterBound(nameof(this.Action))) // the action parameter is bound
+                    this.RegisterEngineEvent();                 // register the action as handler
+        }
+
+        private void RegisterEngineEvent()
+        {
+            var newSubscriber = this.Events.SubscribeEvent(
+                source: null,
+                eventName: null,
+                sourceIdentifier: this.SourceIdentifier,
+                data: null,
+                action: this.Action,
+                supportEvent: false,
+                forwardEvent: false);
+
+            this.WriteObject(newSubscriber.Action);
+        }
+
+        private bool TryCreateFileSystemWatcher(string resolvedPath)
+        {
             // a sourceidentifier must be unique
             if (FileSystemWatchers.TryGetValue(this.SourceIdentifier, out var fileSystemWatcher))
             {
@@ -69,7 +94,7 @@ namespace FSWatcherEngineEvent
                     errorCategory: ErrorCategory.InvalidArgument,
                     targetObject: default));
 
-                return;
+                return false;
             }
 
             var filesystemWatcher = new FileSystemWatcher
@@ -87,6 +112,8 @@ namespace FSWatcherEngineEvent
             this.WriteFileSystemWatcherState(
                 this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, filesystemWatcher))
             );
+
+            return true;
         }
 
         protected bool IsParameterBound(string parameterName) => this.MyInvocation.BoundParameters.ContainsKey(parameterName);

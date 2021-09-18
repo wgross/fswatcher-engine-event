@@ -113,6 +113,43 @@ namespace FSWatcherEngineEvent.Test
         }
 
         [Fact]
+        public void Notifies_on_created_file_with_action_parameter()
+        {
+            // ARRANGE
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .AddParameter("Action", this.SpyOnEvent)
+                .Invoke();
+
+            // ACT
+            File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+            // ASSERT
+            this.Sleep();
+            this.RemoveFileSystemWatcher();
+
+            Assert.False(this.PowerShell.HadErrors);
+
+            PSObject result = this.ReadResultVariable().Single();
+
+            Assert.IsType<PSVariable>(result.BaseObject);
+
+            var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+
+            Assert.NotNull(resultValue);
+
+            var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
+
+            Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+            Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+            Assert.Equal("test.txt", eventJson.MessageData.Name);
+        }
+
+        [Fact]
         public void Reads_file_system_watcher_state()
         {
             // ARRANGE
