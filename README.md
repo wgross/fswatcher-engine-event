@@ -2,6 +2,8 @@
 
 is a Powershell module which notifies of filesystem changes using a Powershell engine events.
 
+For a quick walkthru: https://devblogs.microsoft.com/powershell-community/a-reusable-file-system-event-watcher-for-powershell/
+
 A new event handler can be created with the cmdlet ```New-FileSystemWatcher```:
 
 ## How to Install
