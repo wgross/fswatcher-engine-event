@@ -5,7 +5,7 @@ Task secret-loaded {
    
     $script:secret = Get-Secret -Name powershellGallery -AsPlainText
     
-} -precondition ($null -ne $script:secret)
+} -precondition { $null -eq $script:secret }
 
 Task clean-compile {
 
@@ -16,17 +16,22 @@ Task clean-compile {
 }
 
 Task publish-filesystem {
-    # create a file system structire for publishing to the gallery
-    New-Item  -Path "FSWatcherEngineEvent\1.2" -ItemType Directory -ErrorAction SilentlyContinue
-    Get-ChildItem -File | Copy-Item -Destination "FSWatcherEngineEvent\1.2"
+    
+    # create a file system structure for publishing to the gallery
+    $script:publishDirectory = New-Item  -Path "$PSScriptRoot\FSWatcherEngineEvent\1.3" -ItemType Directory -ErrorAction SilentlyContinue
+
+    "$PSScriptRoot\src\FSWatcherEngineEvent\bin\debug\netstandard2.0\publish"  | fs-dirs\Invoke-AtContainer {
+        Get-ChildItem -File | Copy-Item -Destination $script:publishDirectory -Exclude @("run.ps1","init.ps1") -Force
+    }
+
 } -depends clean-compile
 
 Task publish-gallery {
 
-    "$PSScriptRoot\src\FSWatcherEngineEvent\bin\Debug\netstandard2.0\publish" | fs-dirs\Invoke-AtContainer {
+    $script:publishDirectory | fs-dirs\Invoke-AtContainer {
     
         # now publish to the gallery
-        Publish-Module -Path "FSWatcherEngineEvent\1.2" -NuGetApiKey $script:secret -Verbose 
+        Publish-Module -Name .\FSWatcherEngineEvent.psd1 -NuGetApiKey $script:secret -Verbose 
     }
 
 } -depends secret-loaded,publish-filesystem

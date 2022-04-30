@@ -26,6 +26,16 @@ namespace FSWatcherEngineEvent
             return null;
         }
 
+        public static void StopAllWatching()
+        {
+            foreach (var watcher in FileSystemWatchers.Values)
+            {
+                watcher.StopWatching();
+            }
+
+            FileSystemWatchers.Clear();
+        }
+
         protected FileSystemWatcherState SuspendWatching(string sourceIdentifier)
         {
             if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))

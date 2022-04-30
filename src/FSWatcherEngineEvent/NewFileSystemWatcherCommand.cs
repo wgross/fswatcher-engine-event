@@ -8,6 +8,9 @@ namespace FSWatcherEngineEvent
     [OutputType(typeof(FileSystemWatcherState))]
     public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     {
+        private static PSModuleInfo psModuleInfo;
+        private static PSEventSubscriber onExitSubscription;
+
         [Parameter(
             Mandatory = true,
             ValueFromPipeline = false,
@@ -39,6 +42,20 @@ namespace FSWatcherEngineEvent
         [Parameter(HelpMessage = "Scriptblock to handle filesystem watcher events")]
         [ValidateNotNullOrEmpty()]
         public ScriptBlock Action { get; set; }
+
+        protected override void BeginProcessing()
+        {
+            if (psModuleInfo is null)
+            {
+                // register a 'OnRemove' handler once
+                psModuleInfo = this.InvokeCommand.GetCommand("New-FileSystemWatcher", CommandTypes.All).Module;
+                psModuleInfo.OnRemove = ScriptBlock.Create($"[{typeof(FileSystemWatcherCommandBase).FullName}]::{nameof(FileSystemWatcherCommandBase.StopAllWatching)}()");
+
+                // also register exit event handler
+                this.InvokeCommand
+                    .InvokeScript($"Register-EngineEvent -SourceIdentifier([Management.Automation.PsEngineEvent]::Exiting) -Action {{ [{typeof(FileSystemWatcherCommandBase).FullName}]::{ nameof(FileSystemWatcherCommandBase.StopAllWatching)}() }}");
+            }
+        }
 
         protected override void ProcessRecord()
         {

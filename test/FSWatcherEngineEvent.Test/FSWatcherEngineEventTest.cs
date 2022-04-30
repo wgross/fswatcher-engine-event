@@ -625,5 +625,30 @@ namespace FSWatcherEngineEvent.Test
             Assert.Equal(this.ArrangeFilePath("subdir"), eventJson.MessageData.OldFullPath, ignoreCase: true);
             Assert.Equal("subdir", eventJson.MessageData.OldName);
         }
+
+        [Fact]
+        public void Unregister_on_module_removal()
+        {
+            // ARRANGE
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .Invoke();
+
+            this.ArrangeEngineEvent();
+
+            // ACT
+            this.PowerShell.Commands.Clear();
+            var result = this.PowerShell
+                .AddCommand("Remove-Module")
+                .AddParameter("Name", "FSWatcherEngineEvent")
+                .Invoke();
+
+            // ASSERT
+            Assert.False(this.PowerShell.HadErrors);
+        }
     }
 }
