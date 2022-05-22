@@ -9,7 +9,6 @@ namespace FSWatcherEngineEvent
     public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     {
         private static PSModuleInfo psModuleInfo;
-        private static PSEventSubscriber onExitSubscription;
 
         [Parameter(
             Mandatory = true,
@@ -39,9 +38,12 @@ namespace FSWatcherEngineEvent
         [Parameter(HelpMessage = "Type of change to watch for")]
         public NotifyFilters NotifyFilter { get; set; } = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
 
-        [Parameter(HelpMessage = "Scriptblock to handle filesystem watcher events")]
+        [Parameter(HelpMessage = "Script block to handle file system watcher events")]
         [ValidateNotNullOrEmpty()]
         public ScriptBlock Action { get; set; }
+
+        [Parameter(HelpMessage = "Show editor UI for file system watcher options")]
+        public SwitchParameter EditOptions { get; set; }
 
         protected override void BeginProcessing()
         {
@@ -67,13 +69,13 @@ namespace FSWatcherEngineEvent
 
             // break hard if the path isn't pointing to a win32 file system.
             if (provider.ImplementingType != typeof(FileSystemProvider))
-                throw new PSNotSupportedException($"FileSystemWatcher doesn't work for cmdlet providers of type {provider.ImplementingType}");
+                throw new PSNotSupportedException(string.Format(Resources.Error_ProviderNotSupported, provider.ImplementingType));
 
             // accept only watchers for existing directories or files
             if (!File.Exists(resolvedPath) && !Directory.Exists(resolvedPath))
             {
                 this.WriteError(new ErrorRecord(
-                    exception: new PSArgumentException($"Path: {selectPath()} is invalid", this.ParameterSetName),
+                    exception: new PSArgumentException(string.Format(Resources.Error_PathInvalid, selectPath()), this.ParameterSetName),
                     errorId: "path-invalid",
                     errorCategory: ErrorCategory.InvalidArgument,
                     targetObject: default));
@@ -102,16 +104,40 @@ namespace FSWatcherEngineEvent
 
         private bool TryCreateFileSystemWatcher(string resolvedPath)
         {
-            // a sourceidentifier must be unique
+            // a source identifier must be unique
             if (FileSystemWatchers.TryGetValue(this.SourceIdentifier, out var fileSystemWatcher))
             {
                 this.WriteError(new ErrorRecord(
-                    exception: new PSArgumentException($"Source identifier '{this.SourceIdentifier}' is already watching path '{fileSystemWatcher.Path}'"),
+                    exception: new PSArgumentException(string.Format(Resources.Error_SourceIdentifierAlreadyInUse, this.SourceIdentifier, fileSystemWatcher.Path)),
                     errorId: "subscriptionidentifier-duplicate",
                     errorCategory: ErrorCategory.InvalidArgument,
                     targetObject: default));
 
                 return false;
+            }
+
+            // Show options UI if required
+            if (this.EditOptions.IsPresent)
+            {
+                var fileSystemWatcherOptions = new FileSystemWatcherOptions
+                {
+                    Path = resolvedPath,
+                    Filter = this.Filter ?? string.Empty,
+                    NotifyFilter = this.NotifyFilter,
+                    IncludeSubdirectories = this.IncludeSubdirectories,
+                };
+
+                if (new EditFileSystemWatcherOptionsUI().Run(fileSystemWatcherOptions))
+                {
+                    this.Filter = fileSystemWatcherOptions.Filter;
+                    this.NotifyFilter = fileSystemWatcherOptions.NotifyFilter;
+                    this.IncludeSubdirectories = fileSystemWatcherOptions.IncludeSubdirectories;
+                }
+                else
+                {
+                    this.WriteWarning(Resources.Message_EditingCanceledByUser);
+                    return false;
+                }
             }
 
             var filesystemWatcher = new FileSystemWatcher
@@ -120,11 +146,8 @@ namespace FSWatcherEngineEvent
                 NotifyFilter = this.NotifyFilter
             };
 
-            if (this.IsParameterBound(nameof(IncludeSubdirectories)))
-                filesystemWatcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
-
-            if (this.IsParameterBound(nameof(Filter)))
-                filesystemWatcher.Filter = this.Filter;
+            filesystemWatcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
+            filesystemWatcher.Filter = this.Filter;
 
             this.WriteFileSystemWatcherState(
                 this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, filesystemWatcher))
