@@ -28,7 +28,10 @@ namespace FSWatcherEngineEvent.Test
 
         public void Dispose()
         {
-            this.rootDirectory.Delete(recursive: true);
+            this.rootDirectory.Refresh();
+            if (this.rootDirectory.Exists)
+                this.rootDirectory.Delete(recursive: true);
+
             this.RemoveFileSystemWatcher();
             //this.PowerShell.Dispose();
         }
@@ -350,6 +353,29 @@ namespace FSWatcherEngineEvent.Test
             var result = this.ReadResultVariable().ToArray();
 
             Assert.Empty(result);
+        }
+
+        [Fact(Skip = "deleting the watched directory breaks the powershell")]
+        public void Watching_fails_on_deleted_path()
+        {
+            // ARRANGE
+            this.PowerShell.Commands.Clear();
+            this.PowerShell
+                .AddCommand("New-FileSystemWatcher")
+                .AddParameter("Path", this.rootDirectory.FullName)
+                .AddParameter("SourceIdentifier", this.sourceIdentifier)
+                .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+                .Invoke();
+
+            this.ArrangeEngineEvent();
+
+            // ACT
+            // break the file system watcher
+            this.rootDirectory.Delete(true);
+
+            // ASSERT
+            // powershell doesn't have a signe of failure but the pipeline is closed now.
+            Assert.False(this.PowerShell.HadErrors);
         }
 
         [Fact]
