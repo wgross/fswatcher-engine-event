@@ -223,6 +223,15 @@ namespace FSWatcherEngineEvent {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Throttle notificaton (ms):.
+        /// </summary>
+        internal static string OptionsUI_ThrottleMs {
+            get {
+                return ResourceManager.GetString("OptionsUI.ThrottleMs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specify FileSystem Watcher Options.
         /// </summary>
         internal static string OptionsUI_Title {

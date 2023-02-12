@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Globalization;
+using System.IO;
 using Terminal.Gui;
 
 namespace FSWatcherEngineEvent
@@ -12,6 +13,7 @@ namespace FSWatcherEngineEvent
         public NotifyFilters NotifyFilter { get; set; }
 
         public bool IncludeSubdirectories { get; set; }
+        public int ThrottleMs { get; internal set; }
     }
 
     public class EditFileSystemWatcherOptionsUI
@@ -33,8 +35,10 @@ namespace FSWatcherEngineEvent
         private Label labelPath;
         private Label labelFilter;
         private Label labelNotifyOn;
+        private TextField throttleMs;
         private Button ok;
         private Button cancel;
+        private Label labelThrottleMs;
 
         public bool Run(FileSystemWatcherOptions options)
         {
@@ -129,14 +133,25 @@ namespace FSWatcherEngineEvent
             this.security.X = Pos.Left(this.win) + 2;
             this.security.Y = Pos.Top(this.creationTime) + 1;
 
+            this.labelThrottleMs = new Label(Resources.OptionsUI_ThrottleMs);
+            this.labelThrottleMs.X = Pos.Left(this.win) + 2;
+            this.labelThrottleMs.Y = Pos.Top(this.security) + 2;
+
+            this.throttleMs = new TextField("0");
+            this.throttleMs.X = Pos.Left(this.win) + 30;
+            this.throttleMs.Y = Pos.Top(this.labelThrottleMs);
+            this.throttleMs.Enabled = true;
+            this.throttleMs.Width = 6;
+            this.throttleMs.KeyPress += this.ThrottleMs_KeyPress;
+
             this.ok = new Button(Resources.OptionsUI_Ok);
             this.ok.X = 10;
-            this.ok.Y = Pos.Top(this.security) + 2;
+            this.ok.Y = Pos.Top(this.throttleMs) + 2;
             this.ok.Clicked += this.OnOk;
 
             this.cancel = new Button(Resources.OptionsUI_Cancel);
             this.cancel.X = 25;
-            this.cancel.Y = Pos.Top(this.security) + 2;
+            this.cancel.Y = Pos.Top(this.throttleMs)+2;
             this.cancel.Clicked += this.OnCancel;
 
             win.Add(
@@ -144,8 +159,17 @@ namespace FSWatcherEngineEvent
                 this.labelFilter, this.filterText,
                 this.recurse,
                 this.labelNotifyOn, this.fileName, this.directory, this.attributes, this.size, this.lastWrite, this.lastAccess, this.creationTime, this.security,
-                ok, cancel);
+                this.labelThrottleMs, this.throttleMs,
+                this.ok, this.cancel);
             return win;
+        }
+
+        private void ThrottleMs_KeyPress(View.KeyEventEventArgs obj)
+        {
+            if (int.TryParse(this.throttleMs.Text.ToString(), out var value))
+                this.options.ThrottleMs = value;
+            else
+                this.throttleMs.Text = this.options.ThrottleMs.ToString(CultureInfo.InvariantCulture);
         }
 
         private void OnOk()

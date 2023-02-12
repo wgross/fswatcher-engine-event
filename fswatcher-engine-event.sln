@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30804.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DB2BAB71-49D0-43A6-B011-6140C53D5B80}"
 EndProject
@@ -10,6 +10,11 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FSWatcherEngineEvent", "src\FSWatcherEngineEvent\FSWatcherEngineEvent.csproj", "{DF9CE637-F27B-48BC-B816-0ED6A9C4EACB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FSWatcherEngineEvent.Test", "test\FSWatcherEngineEvent.Test\FSWatcherEngineEvent.Test.csproj", "{99F56869-CFF4-4F41-AD10-82653854D5B6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B47654D8-617D-416D-989A-CE9B613CAE97}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

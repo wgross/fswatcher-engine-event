@@ -185,6 +185,10 @@
     <value>Path:</value>
     <comment>Label for Path edit box</comment>
   </data>
+  <data name="OptionsUI.ThrottleMs" xml:space="preserve">
+    <value>Throttle notificaton (ms):</value>
+    <comment>Milliseconds to wail between two notifications</comment>
+  </data>
   <data name="OptionsUI.Title" xml:space="preserve">
     <value>Specify FileSystem Watcher Options</value>
     <comment>Title of the options ui window</comment>

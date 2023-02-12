@@ -46,5 +46,7 @@
         public string OldFullPath { get; set; }
 
         public string OldName { get; set; }
+
+        public EventDumpMessageData[] Aggregated { get; set; }
     }
 }

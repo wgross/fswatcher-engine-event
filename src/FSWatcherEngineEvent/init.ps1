@@ -2,9 +2,10 @@
 Import-Module $PSScriptRoot/FSWatcherEngineEvent.psd1
 
 # Initialize the environment
-# New-FileSystemWatcher -SourceIdentifier "myevent" -Path d:\tmp\files
+New-Item -Path $PWD/test-files -ItemType Container -ErrorAction SilentlyContinue
 
-New-FileSystemWatcher -SourceIdentifier myevent -Path d:\tmp\files -EditOptions
+# New-FileSystemWatcher -SourceIdentifier "myevent" -Path .\test-files
+New-FileSystemWatcher -SourceIdentifier myevent -Path .\test-files -EditOptions
 
 # Output process id for attaching the debugger
 $PID

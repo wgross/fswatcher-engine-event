@@ -32,7 +32,7 @@ namespace FSWatcherEngineEvent
         [Parameter(HelpMessage = "Watch in subdirectories of $Path as well")]
         public SwitchParameter IncludeSubdirectories { get; set; }
 
-        [Parameter(HelpMessage = "Wildcard of files and directory names to include")]
+        [Parameter(HelpMessage = "Wild card of files and directory names to include")]
         public string Filter { get; set; }
 
         [Parameter(HelpMessage = "Type of change to watch for")]
@@ -41,6 +41,9 @@ namespace FSWatcherEngineEvent
         [Parameter(HelpMessage = "Script block to handle file system watcher events")]
         [ValidateNotNullOrEmpty()]
         public ScriptBlock Action { get; set; }
+
+        [Parameter(HelpMessage = "From a first event it collects the incoming events for given number of milliseconds and the send all as one event")]
+        public int ThrottleMs { get; set; }
 
         [Parameter(HelpMessage = "Show editor UI for file system watcher options")]
         public SwitchParameter EditOptions { get; set; }
@@ -55,7 +58,7 @@ namespace FSWatcherEngineEvent
 
                 // also register exit event handler
                 this.InvokeCommand
-                    .InvokeScript($"Register-EngineEvent -SourceIdentifier([Management.Automation.PsEngineEvent]::Exiting) -Action {{ [{typeof(FileSystemWatcherCommandBase).FullName}]::{ nameof(FileSystemWatcherCommandBase.StopAllWatching)}() }}");
+                    .InvokeScript($"Register-EngineEvent -SourceIdentifier([Management.Automation.PsEngineEvent]::Exiting) -Action {{ [{typeof(FileSystemWatcherCommandBase).FullName}]::{nameof(FileSystemWatcherCommandBase.StopAllWatching)}() }}");
             }
         }
 
@@ -125,6 +128,7 @@ namespace FSWatcherEngineEvent
                     Filter = this.Filter ?? string.Empty,
                     NotifyFilter = this.NotifyFilter,
                     IncludeSubdirectories = this.IncludeSubdirectories,
+                    ThrottleMs = this.ThrottleMs
                 };
 
                 if (new EditFileSystemWatcherOptionsUI().Run(fileSystemWatcherOptions))
@@ -132,6 +136,7 @@ namespace FSWatcherEngineEvent
                     this.Filter = fileSystemWatcherOptions.Filter;
                     this.NotifyFilter = fileSystemWatcherOptions.NotifyFilter;
                     this.IncludeSubdirectories = fileSystemWatcherOptions.IncludeSubdirectories;
+                    this.ThrottleMs = fileSystemWatcherOptions.ThrottleMs;
                 }
                 else
                 {
@@ -150,7 +155,7 @@ namespace FSWatcherEngineEvent
             filesystemWatcher.Filter = this.Filter;
 
             this.WriteFileSystemWatcherState(
-                this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, filesystemWatcher))
+                this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, this.ThrottleMs, filesystemWatcher))
             );
 
             return true;
