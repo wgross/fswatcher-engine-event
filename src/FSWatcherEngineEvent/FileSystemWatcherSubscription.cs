@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Management.Automation;
 using System.Threading.Tasks;
 
@@ -20,7 +19,7 @@ namespace FSWatcherEngineEvent
         private readonly ICommandRuntime commandRuntime;
         private readonly int throttleMs;
         private readonly FileSystemWatcher fileSystemWatcher;
-        private Action<(object sender, PSObject e)> generateEventDelagate;
+        private Action<FileSystemEventArgs> generateEventDelagate;
 
         public FileSystemWatcherSubscription(string sourceIdentifier, PSEventManager psEventManager, ICommandRuntime commandRuntime, int throttleMs, FileSystemWatcher fileSystemWatcher)
         {
@@ -35,7 +34,7 @@ namespace FSWatcherEngineEvent
         internal void StartWatching()
         {
             if (this.throttleMs > 0)
-                this.generateEventDelagate = this.Throttle<(object, FileSystemEventArgs)>(this.GenerateEvent, TimeSpan.FromMilliseconds(this.throttleMs));
+                this.generateEventDelagate = this.Throttle(this.GenerateEvent, TimeSpan.FromMilliseconds(this.throttleMs));
 
             this.fileSystemWatcher.Changed += this.OnChanged;
             this.fileSystemWatcher.Created += this.OnChanged;
@@ -69,20 +68,29 @@ namespace FSWatcherEngineEvent
                 targetObject: sender));
         }
 
-        private void OnRenamed(object sender, RenamedEventArgs e) => this.generateEventDelagate((sender, PSObject.AsPSObject(e)));
+        private void OnRenamed(object sender, RenamedEventArgs e) => this.generateEventDelagate(e);
 
-        private void OnChanged(object sender, FileSystemEventArgs e) => this.generateEventDelagate((sender, PSObject.AsPSObject(e)));
+        private void OnChanged(object sender, FileSystemEventArgs e) => this.generateEventDelagate(e);
 
-        private void GenerateEvent((object sender, PSObject extraData) args)
+        private void GenerateEvent(List<FileSystemEventArgs> eventArgs)
         {
             this.psEventManager.GenerateEvent(
                 sourceIdentifier: this.SourceIdentifier,
-                sender: args.sender,
+                sender: this.fileSystemWatcher,
                 args: null,
-                extraData: args.extraData);
+                extraData: PSObject.AsPSObject(eventArgs.AsReadOnly()));
         }
 
-        private Action<(object, PSObject)> Throttle<T>(Action<(object sender, PSObject extraData)> action, TimeSpan interval)
+        private void GenerateEvent(FileSystemEventArgs eventArgs)
+        {
+            this.psEventManager.GenerateEvent(
+                sourceIdentifier: this.SourceIdentifier,
+                sender: this.fileSystemWatcher,
+                args: null,
+                extraData: PSObject.AsPSObject(eventArgs));
+        }
+
+        private Action<FileSystemEventArgs> Throttle(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
         {
             // captured in closure:
             // .. the delivering delayed task
@@ -90,12 +98,12 @@ namespace FSWatcherEngineEvent
             // .. a lock handle
             var l = new object();
             // .. a storage for the calling args
-            var args = new List<(object sender, PSObject extraData)>();
+            var args = new List<FileSystemEventArgs>();
 
-            return ((object sender, PSObject extraData) arg) =>
+            return (FileSystemEventArgs e) =>
             {
                 // the latest calling args are kept for later use
-                args.Add(arg);
+                args.Add(e);
 
                 // if the delayed delivery is already initialized, return
                 if (task != null)
@@ -111,27 +119,11 @@ namespace FSWatcherEngineEvent
                     // after expiry of the interval the latest args are delivered to the receiver
                     task = Task.Delay(interval).ContinueWith(t =>
                     {
-                        var firstEvent = args[0];
-                        if (args.Count > 1)
-                        {
-                            // from the first event create an instance of the aggregated event class.
-                            // containing all events the happened during the throttle period as an array.
-                            // int the future it may be possible to choose the last event as the header event.
+                        var tmp = args;
 
-                            var firstEventArgs = (FileSystemEventArgs)firstEvent.extraData.BaseObject;
+                        action(tmp);
 
-                            var aggregatedEvent = new AggregatedFileSystemEventArgs(
-                                firstEventArgs.ChangeType,
-                                System.IO.Path.GetDirectoryName(firstEventArgs.FullPath),
-                                firstEventArgs.Name)
-                            {
-                                Aggregated = args.Select(a => (FileSystemEventArgs)a.extraData.BaseObject).ToArray()
-                            };
-
-                            action((firstEvent.sender, PSObject.AsPSObject(aggregatedEvent)));
-                        }
-                        else action((firstEvent.sender, firstEvent.extraData));
-
+                        args = new List<FileSystemEventArgs>();
                         task = null;
                     });
                 }

@@ -22,16 +22,16 @@
     //  ],
     //  "SourceIdentifier": "source",
     //  "TimeGenerated": "2021-03-07T16:00:51.8923011+01:00",
-    //  "MessageData": {
-    //"ChangeType": 4,
+    //  "MessageData": [{
+    //     "ChangeType": 4,
     //    "FullPath": "D:\\tmp\\watched\\test.txt",
     //    "Name": "test.txt"
-    //  }
+    //  }]
     //}
-    public class EventJson
+    public class MultiEventJson
     {
         public string SourceIdentifier { get; set; }
 
-        public EventDumpMessageData MessageData { get; set; }
+        public EventDumpMessageData[] MessageData { get; set; }
     }
 }

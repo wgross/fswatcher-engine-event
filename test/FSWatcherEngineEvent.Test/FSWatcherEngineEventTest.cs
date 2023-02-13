@@ -172,14 +172,14 @@ public class FSWatcherEngineEventTest : IDisposable
 
         Assert.Single(result_collection);
 
-        var eventJson = JsonSerializer.Deserialize<EventJson>(result_collection.GetValue(0).ToString());
+        var eventJson = JsonSerializer.Deserialize<MultiEventJson>(result_collection.GetValue(0).ToString());
 
-        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test1.txt"), eventJson.MessageData.FullPath);
-        Assert.Equal("test1.txt", eventJson.MessageData.Name);
-        Assert.Equal(3, eventJson.MessageData.Aggregated.Length);
-        Assert.All(eventJson.MessageData.Aggregated.Select(e => e.ChangeType), ct => Assert.Equal(4, ct));
-        Assert.Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Aggregated.Select(a => a.Name));
+        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData[0].ChangeType);
+        Assert.Equal(this.ArrangeFilePath("test1.txt"), eventJson.MessageData[0].FullPath);
+        Assert.Equal("test1.txt", eventJson.MessageData[0].Name);
+        Assert.Equal(3, eventJson.MessageData.Length);
+        Assert.All(eventJson.MessageData.Select(e => e.ChangeType), ct => Assert.Equal(4, ct));
+        Assert.Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
     }
 
     [Fact]
