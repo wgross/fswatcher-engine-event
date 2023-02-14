@@ -23,6 +23,7 @@
             1.2: shortcuts the (un-)register event handlers when creating and removing file system watchers.
             1.3: remove file system listener when removing the module from the session
             1.4: presents small text UI for editing watcher parameters before create
+            1.5: throttling and debouncing of events
 "@
         }
     }

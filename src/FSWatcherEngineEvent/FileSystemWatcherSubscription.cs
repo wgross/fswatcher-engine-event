@@ -18,24 +18,35 @@ namespace FSWatcherEngineEvent
         private readonly PSEventManager psEventManager;
         private readonly ICommandRuntime commandRuntime;
         private readonly int throttleMs;
+        private readonly int debounceMs;
         private readonly FileSystemWatcher fileSystemWatcher;
-        private Action<FileSystemEventArgs> generateEventDelagate;
+        private readonly Action<FileSystemEventArgs> generateEventDelagate;
 
-        public FileSystemWatcherSubscription(string sourceIdentifier, PSEventManager psEventManager, ICommandRuntime commandRuntime, int throttleMs, FileSystemWatcher fileSystemWatcher)
+        public FileSystemWatcherSubscription(
+            string sourceIdentifier,
+            PSEventManager psEventManager,
+            ICommandRuntime commandRuntime,
+            int throttleMs,
+            int debounceMs,
+            FileSystemWatcher fileSystemWatcher)
         {
             this.SourceIdentifier = sourceIdentifier;
             this.psEventManager = psEventManager;
             this.commandRuntime = commandRuntime;
             this.throttleMs = throttleMs;
+            this.debounceMs = debounceMs;
             this.fileSystemWatcher = fileSystemWatcher;
-            this.generateEventDelagate = this.GenerateEvent;
+
+            if (this.throttleMs > 0)
+                this.generateEventDelagate = this.Throttle(this.GenerateEvent, TimeSpan.FromMilliseconds(this.throttleMs));
+            else if (this.debounceMs > 0)
+                this.generateEventDelagate = this.Debounce(this.GenerateEvent, TimeSpan.FromMilliseconds(this.debounceMs));
+            else
+                this.generateEventDelagate = this.GenerateEvent;
         }
 
         internal void StartWatching()
         {
-            if (this.throttleMs > 0)
-                this.generateEventDelagate = this.Throttle(this.GenerateEvent, TimeSpan.FromMilliseconds(this.throttleMs));
-
             this.fileSystemWatcher.Changed += this.OnChanged;
             this.fileSystemWatcher.Created += this.OnChanged;
             this.fileSystemWatcher.Deleted += this.OnChanged;
@@ -93,11 +104,9 @@ namespace FSWatcherEngineEvent
         private Action<FileSystemEventArgs> Throttle(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
         {
             // captured in closure:
-            // .. the delivering delayed task
             Task task = null;
-            // .. a lock handle
+
             var l = new object();
-            // .. a storage for the calling args
             var args = new List<FileSystemEventArgs>();
 
             return (FileSystemEventArgs e) =>
@@ -127,6 +136,37 @@ namespace FSWatcherEngineEvent
                         task = null;
                     });
                 }
+            };
+        }
+
+        private Action<FileSystemEventArgs> Debounce(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
+        {
+            if (action is null)
+                throw new ArgumentNullException(nameof(action));
+
+            var last = 0;
+            var args = new List<FileSystemEventArgs>();
+
+            return arg =>
+            {
+                args.Add(arg);
+
+                // increment while calls of the event are coming
+                var current = System.Threading.Interlocked.Increment(ref last);
+
+                // first incoming event starts the delayed invocation of the action
+                Task.Delay(interval).ContinueWith(task =>
+                {
+                    // excute action after a period of time where no changes happen
+                    if (current == last)
+                    {
+                        var tmp = args;
+
+                        action(tmp);
+
+                        args = new List<FileSystemEventArgs>();
+                    }
+                });
             };
         }
     }

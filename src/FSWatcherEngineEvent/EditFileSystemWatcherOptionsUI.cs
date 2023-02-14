@@ -14,6 +14,7 @@ namespace FSWatcherEngineEvent
 
         public bool IncludeSubdirectories { get; set; }
         public int ThrottleMs { get; internal set; }
+        public int DebounceMs { get; internal set; }
     }
 
     public class EditFileSystemWatcherOptionsUI

@@ -76,14 +76,14 @@ PS> "XYZ" >> C:\temp\files\xyz
 }
 ```
 
-Since version 1.2 of the module, an event handler can be specified at `New-FileSystemWatcher` instead of registering it after creation of the watcher as a seperate command:
+Since version 1.2 of the module an event handler can be specified at `New-FileSystemWatcher` instead of registering it after creation of the watcher as a separate command:
 
 ```powershell
 PS> New-FileSystemWatcher -SourceIdentifier "myevent" -Path c:\temp\files -Action { $event | ConvertTo-Json | Write-Host }
 ```
 
 While there can be only one file system watcher for a source identifier it is possible to register multiple event handlers for the same source identifier.
-To inspect the current registrations you may use Powershells ```Get-EventSubscriber``` command:
+To inspect the current registrations you may use PowerShells ```Get-EventSubscriber``` command:
 
 ```powershell
 PS> Get-EventSubscriber
@@ -109,6 +109,38 @@ NotifyFilter          : FileName, DirectoryName, LastWrite
 EnableRaisingEvents   : True
 IncludeSubdirectories : False
 Filter                : *
+```
+
+## Debounce or Throttle Notifications
+
+With version 1.5 notifications from teh file system watcher can be throttled or debounced.
+Throttling aggregates all notifications within a given time interval and send a single notification contains a list of the collected notifications after the time interval has elapsed.
+Debouncing means that change notifications are held back until no further event occurs for a given time span.
+The now sent event contains also a list of changes that were held back.
+It isn't possible to combine these two options.
+The structure of the event is different from the notifications without debouncing or throttling:
+
+```json
+{
+  // the upper part is unchanged
+  ..
+
+  "MessageData": [{ // <- message data is an array of events instead of a single one
+    "ChangeType": 4,
+    "FullPath": "C:\\temp\\files\\xyz",
+    "Name": "xyz"
+  },
+  .. // more events
+  ]
+}
+```
+
+To enable debouncing or throttling specify the method and the time interval as a parameter:
+
+```powershell
+PS> Register-EngineEvent -SourceIdentifier "myevent" -Action { $event | ConvertTo-Json | Write-Host } -DebounceMs 100
+
+PS> Register-EngineEvent -SourceIdentifier "myevent" -Action { $event | ConvertTo-Json | Write-Host } -ThrottleMs 100
 ```
 
 ## Suspend and Resume Watching

@@ -183,6 +183,49 @@ public class FSWatcherEngineEventTest : IDisposable
     }
 
     [Fact]
+    public void Notifies_on_changed_file_multiple_times_debounced()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("DebounceMs", 100)
+            .Invoke();
+
+        this.ArrangeEngineEventWithCollection();
+
+        // ACT
+        // write three times, receive 3 events
+        File.WriteAllText(this.ArrangeFilePath("test1.txt"), Guid.NewGuid().ToString());
+        File.WriteAllText(this.ArrangeFilePath("test2.txt"), Guid.NewGuid().ToString());
+        File.WriteAllText(this.ArrangeFilePath("test3.txt"), Guid.NewGuid().ToString());
+
+        // ASSERT
+        this.Sleep();
+        this.RemoveFileSystemWatcher();
+
+        Assert.False(this.PowerShell.HadErrors);
+
+        var result = this.ReadResultCollection().Single();
+
+        var result_collection = ((PSVariable)result.BaseObject).Value as Array;
+
+        Assert.Single(result_collection);
+
+        var eventJson = JsonSerializer.Deserialize<MultiEventJson>(result_collection.GetValue(0).ToString());
+
+        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData[0].ChangeType);
+        Assert.Equal(this.ArrangeFilePath("test1.txt"), eventJson.MessageData[0].FullPath);
+        Assert.Equal("test1.txt", eventJson.MessageData[0].Name);
+        Assert.Equal(3, eventJson.MessageData.Length);
+        Assert.All(eventJson.MessageData.Select(e => e.ChangeType), ct => Assert.Equal(4, ct));
+        Assert.Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
+    }
+
+    [Fact]
     public void Notifies_on_created_file_with_action_parameter()
     {
         // ARRANGE

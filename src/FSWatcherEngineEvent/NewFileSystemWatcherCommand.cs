@@ -42,8 +42,11 @@ namespace FSWatcherEngineEvent
         [ValidateNotNullOrEmpty()]
         public ScriptBlock Action { get; set; }
 
-        [Parameter(HelpMessage = "From a first event it collects the incoming events for given number of milliseconds and the send all as one event")]
+        [Parameter(HelpMessage = "Collects incoming events for given number of milliseconds and the send them all together one event after timespan has elapsed")]
         public int ThrottleMs { get; set; }
+
+        [Parameter(HelpMessage = "Collects incoming events while event happen within the given timespan. Ff no new event happen they are sent together as one.")]
+        public int DebounceMs { get; set; }
 
         [Parameter(HelpMessage = "Show editor UI for file system watcher options")]
         public SwitchParameter EditOptions { get; set; }
@@ -73,6 +76,10 @@ namespace FSWatcherEngineEvent
             // break hard if the path isn't pointing to a win32 file system.
             if (provider.ImplementingType != typeof(FileSystemProvider))
                 throw new PSNotSupportedException(string.Format(Resources.Error_ProviderNotSupported, provider.ImplementingType));
+
+            // debounce and throttle can't be combined
+            if (this.ThrottleMs > 0 && this.DebounceMs > 0)
+                throw new PSNotSupportedException(Resources.Error_CantConbineThrottleAndDebounce);
 
             // accept only watchers for existing directories or files
             if (!File.Exists(resolvedPath) && !Directory.Exists(resolvedPath))
@@ -128,7 +135,8 @@ namespace FSWatcherEngineEvent
                     Filter = this.Filter ?? string.Empty,
                     NotifyFilter = this.NotifyFilter,
                     IncludeSubdirectories = this.IncludeSubdirectories,
-                    ThrottleMs = this.ThrottleMs
+                    ThrottleMs = this.ThrottleMs,
+                    DebounceMs = this.DebounceMs
                 };
 
                 if (new EditFileSystemWatcherOptionsUI().Run(fileSystemWatcherOptions))
@@ -137,6 +145,7 @@ namespace FSWatcherEngineEvent
                     this.NotifyFilter = fileSystemWatcherOptions.NotifyFilter;
                     this.IncludeSubdirectories = fileSystemWatcherOptions.IncludeSubdirectories;
                     this.ThrottleMs = fileSystemWatcherOptions.ThrottleMs;
+                    this.DebounceMs = fileSystemWatcherOptions.DebounceMs;
                 }
                 else
                 {
@@ -155,7 +164,13 @@ namespace FSWatcherEngineEvent
             filesystemWatcher.Filter = this.Filter;
 
             this.WriteFileSystemWatcherState(
-                this.StartWatching(new FileSystemWatcherSubscription(this.SourceIdentifier, this.Events, this.CommandRuntime, this.ThrottleMs, filesystemWatcher))
+                this.StartWatching(new FileSystemWatcherSubscription(
+                    this.SourceIdentifier,
+                    this.Events,
+                    this.CommandRuntime,
+                    this.ThrottleMs,
+                    this.DebounceMs,
+                    filesystemWatcher))
             );
 
             return true;

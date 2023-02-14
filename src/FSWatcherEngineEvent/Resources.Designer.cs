@@ -61,6 +61,15 @@ namespace FSWatcherEngineEvent {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ThrottleMs and DebounceMs can&apos;t be combined..
+        /// </summary>
+        internal static string Error_CantConbineThrottleAndDebounce {
+            get {
+                return ResourceManager.GetString("Error.CantConbineThrottleAndDebounce", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Path: &apos;{0}&apos; is invalid.
         /// </summary>
         internal static string Error_PathInvalid {

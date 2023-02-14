@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Error.CantConbineThrottleAndDebounce" xml:space="preserve">
+    <value>ThrottleMs and DebounceMs can't be combined.</value>
+  </data>
   <data name="Error.PathInvalid" xml:space="preserve">
     <value>Path: '{0}' is invalid</value>
   </data>
