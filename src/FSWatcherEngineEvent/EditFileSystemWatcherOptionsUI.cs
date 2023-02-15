@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using NStack;
+using System.Globalization;
 using System.IO;
 using Terminal.Gui;
 
@@ -39,7 +40,10 @@ namespace FSWatcherEngineEvent
         private TextField throttleMs;
         private Button ok;
         private Button cancel;
+        private RadioGroup delayEventRadio;
         private Label labelThrottleMs;
+        private TextField debounceMs;
+        private Label labelDebounceMs;
 
         public bool Run(FileSystemWatcherOptions options)
         {
@@ -134,25 +138,34 @@ namespace FSWatcherEngineEvent
             this.security.X = Pos.Left(this.win) + 2;
             this.security.Y = Pos.Top(this.creationTime) + 1;
 
-            this.labelThrottleMs = new Label(Resources.OptionsUI_ThrottleMs);
-            this.labelThrottleMs.X = Pos.Left(this.win) + 2;
-            this.labelThrottleMs.Y = Pos.Top(this.security) + 2;
+            this.delayEventRadio = new RadioGroup(new ustring[]
+            {
+                Resources.OptionsUI_ThrottleMs,
+                Resources.OptionsUI_DebounceMs
+            });
+            this.delayEventRadio.X = Pos.Left(this.win) + 2;
+            this.delayEventRadio.Y = Pos.Top(this.security) + 2;
 
-            this.throttleMs = new TextField("0");
-            this.throttleMs.X = Pos.Left(this.win) + 30;
-            this.throttleMs.Y = Pos.Top(this.labelThrottleMs);
-            this.throttleMs.Enabled = true;
+            this.throttleMs = new TextField("");
+            this.throttleMs.X = Pos.Right(this.delayEventRadio) + 1;
+            this.throttleMs.Y = Pos.Top(this.delayEventRadio);
             this.throttleMs.Width = 6;
             this.throttleMs.KeyPress += this.ThrottleMs_KeyPress;
 
+            this.debounceMs = new TextField("");
+            this.debounceMs.X = Pos.Right(this.delayEventRadio) + 1;
+            this.debounceMs.Y = Pos.Top(this.delayEventRadio) + 1;
+            this.debounceMs.Width = 6;
+            this.debounceMs.KeyPress += this.DebounceMs_KeyPress;
+
             this.ok = new Button(Resources.OptionsUI_Ok);
             this.ok.X = 10;
-            this.ok.Y = Pos.Top(this.throttleMs) + 2;
+            this.ok.Y = Pos.Bottom(this.delayEventRadio) + 2;
             this.ok.Clicked += this.OnOk;
 
             this.cancel = new Button(Resources.OptionsUI_Cancel);
             this.cancel.X = 25;
-            this.cancel.Y = Pos.Top(this.throttleMs)+2;
+            this.cancel.Y = Pos.Bottom(this.delayEventRadio) + 2;
             this.cancel.Clicked += this.OnCancel;
 
             win.Add(
@@ -160,7 +173,7 @@ namespace FSWatcherEngineEvent
                 this.labelFilter, this.filterText,
                 this.recurse,
                 this.labelNotifyOn, this.fileName, this.directory, this.attributes, this.size, this.lastWrite, this.lastAccess, this.creationTime, this.security,
-                this.labelThrottleMs, this.throttleMs,
+                this.delayEventRadio, this.debounceMs, this.throttleMs,
                 this.ok, this.cancel);
             return win;
         }
@@ -168,9 +181,19 @@ namespace FSWatcherEngineEvent
         private void ThrottleMs_KeyPress(View.KeyEventEventArgs obj)
         {
             if (int.TryParse(this.throttleMs.Text.ToString(), out var value))
+            {
                 this.options.ThrottleMs = value;
-            else
-                this.throttleMs.Text = this.options.ThrottleMs.ToString(CultureInfo.InvariantCulture);
+            }
+            else this.throttleMs.Text = this.options.ThrottleMs.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private void DebounceMs_KeyPress(View.KeyEventEventArgs obj)
+        {
+            if (int.TryParse(this.debounceMs.Text.ToString(), out var value))
+            {
+                this.options.DebounceMs = value;
+            }
+            else this.debounceMs.Text = this.options.ThrottleMs.ToString(CultureInfo.InvariantCulture);
         }
 
         private void OnOk()
@@ -188,8 +211,11 @@ namespace FSWatcherEngineEvent
             this.options.NotifyFilter = (NotifyFilters)filters;
 
             this.options.IncludeSubdirectories = this.recurse.Checked;
+            this.options.ThrottleMs = this.delayEventRadio.SelectedItem == 0 ? this.options.ThrottleMs : 0;
+            this.options.DebounceMs = this.delayEventRadio.SelectedItem == 1 ? this.options.DebounceMs : 0;
 
             this.isOk = true;
+
             Application.RequestStop();
         }
 

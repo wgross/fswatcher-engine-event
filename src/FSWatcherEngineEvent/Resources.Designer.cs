@@ -22,7 +22,7 @@ namespace FSWatcherEngineEvent {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace FSWatcherEngineEvent {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("FSWatcherEngineEvent.Resources", typeof(Resources).Assembly);
@@ -51,7 +51,7 @@ namespace FSWatcherEngineEvent {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to ThrottleMs and DebounceMs can&apos;t be combined..
         /// </summary>
-        internal static string Error_CantConbineThrottleAndDebounce {
+        public static string Error_CantConbineThrottleAndDebounce {
             get {
                 return ResourceManager.GetString("Error.CantConbineThrottleAndDebounce", resourceCulture);
             }
@@ -72,7 +72,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Path: &apos;{0}&apos; is invalid.
         /// </summary>
-        internal static string Error_PathInvalid {
+        public static string Error_PathInvalid {
             get {
                 return ResourceManager.GetString("Error.PathInvalid", resourceCulture);
             }
@@ -81,7 +81,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to FileSystemWatcher doesn&apos;t work for cmdlet providers of type {0}.
         /// </summary>
-        internal static string Error_ProviderNotSupported {
+        public static string Error_ProviderNotSupported {
             get {
                 return ResourceManager.GetString("Error.ProviderNotSupported", resourceCulture);
             }
@@ -90,7 +90,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Source identifier &apos;{0}&apos; is already watching path &apos;{1}&apos;.
         /// </summary>
-        internal static string Error_SourceIdentifierAlreadyInUse {
+        public static string Error_SourceIdentifierAlreadyInUse {
             get {
                 return ResourceManager.GetString("Error.SourceIdentifierAlreadyInUse", resourceCulture);
             }
@@ -99,7 +99,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Editing of the file system watcher options was cancelled by the user.
         /// </summary>
-        internal static string Message_EditingCanceledByUser {
+        public static string Message_EditingCanceledByUser {
             get {
                 return ResourceManager.GetString("Message.EditingCanceledByUser", resourceCulture);
             }
@@ -108,16 +108,25 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Cancel.
         /// </summary>
-        internal static string OptionsUI_Cancel {
+        public static string OptionsUI_Cancel {
             get {
                 return ResourceManager.GetString("OptionsUI.Cancel", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Debounce notificaton (ms):.
+        /// </summary>
+        public static string OptionsUI_DebounceMs {
+            get {
+                return ResourceManager.GetString("OptionsUI.DebounceMs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Filter files by name:.
         /// </summary>
-        internal static string OptionsUI_FilterWildCardLabel {
+        public static string OptionsUI_FilterWildCardLabel {
             get {
                 return ResourceManager.GetString("OptionsUI.FilterWildCardLabel", resourceCulture);
             }
@@ -126,7 +135,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Include Sub directories.
         /// </summary>
-        internal static string OptionsUI_IncludeSubDirs {
+        public static string OptionsUI_IncludeSubDirs {
             get {
                 return ResourceManager.GetString("OptionsUI.IncludeSubDirs", resourceCulture);
             }
@@ -135,7 +144,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to File/Folder Attributes have changed (Attributes).
         /// </summary>
-        internal static string OptionsUI_NotifyOnAttributes {
+        public static string OptionsUI_NotifyOnAttributes {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnAttributes", resourceCulture);
             }
@@ -144,7 +153,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to File/Folder has been created (CreationTime).
         /// </summary>
-        internal static string OptionsUI_NotifyOnCreationTime {
+        public static string OptionsUI_NotifyOnCreationTime {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnCreationTime", resourceCulture);
             }
@@ -153,7 +162,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Directory name has changed (Directory).
         /// </summary>
-        internal static string OptionsUI_NotifyOnDirectory {
+        public static string OptionsUI_NotifyOnDirectory {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnDirectory", resourceCulture);
             }
@@ -162,7 +171,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to File name has changed (FileName).
         /// </summary>
-        internal static string OptionsUI_NotifyOnFileName {
+        public static string OptionsUI_NotifyOnFileName {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnFileName", resourceCulture);
             }
@@ -171,7 +180,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Notify on:.
         /// </summary>
-        internal static string OptionsUI_NotifyOnHeader {
+        public static string OptionsUI_NotifyOnHeader {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnHeader", resourceCulture);
             }
@@ -180,7 +189,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to File/Folder has been accessed (LastAccess).
         /// </summary>
-        internal static string OptionsUI_NotifyOnLastAccess {
+        public static string OptionsUI_NotifyOnLastAccess {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnLastAccess", resourceCulture);
             }
@@ -189,7 +198,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to File/Folder has been written to (LastWrite).
         /// </summary>
-        internal static string OptionsUI_NotifyOnLastWrite {
+        public static string OptionsUI_NotifyOnLastWrite {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnLastWrite", resourceCulture);
             }
@@ -198,7 +207,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Files/Folder access rights have been changed (Security).
         /// </summary>
-        internal static string OptionsUI_NotifyOnSecurity {
+        public static string OptionsUI_NotifyOnSecurity {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnSecurity", resourceCulture);
             }
@@ -207,7 +216,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to File/Folder Size has changed (Size).
         /// </summary>
-        internal static string OptionsUI_NotifyOnSize {
+        public static string OptionsUI_NotifyOnSize {
             get {
                 return ResourceManager.GetString("OptionsUI.NotifyOnSize", resourceCulture);
             }
@@ -216,7 +225,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to OK.
         /// </summary>
-        internal static string OptionsUI_Ok {
+        public static string OptionsUI_Ok {
             get {
                 return ResourceManager.GetString("OptionsUI.Ok", resourceCulture);
             }
@@ -225,7 +234,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Path:.
         /// </summary>
-        internal static string OptionsUI_PathLabel {
+        public static string OptionsUI_PathLabel {
             get {
                 return ResourceManager.GetString("OptionsUI.PathLabel", resourceCulture);
             }
@@ -234,7 +243,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Throttle notificaton (ms):.
         /// </summary>
-        internal static string OptionsUI_ThrottleMs {
+        public static string OptionsUI_ThrottleMs {
             get {
                 return ResourceManager.GetString("OptionsUI.ThrottleMs", resourceCulture);
             }
@@ -243,7 +252,7 @@ namespace FSWatcherEngineEvent {
         /// <summary>
         ///   Looks up a localized string similar to Specify FileSystem Watcher Options.
         /// </summary>
-        internal static string OptionsUI_Title {
+        public static string OptionsUI_Title {
             get {
                 return ResourceManager.GetString("OptionsUI.Title", resourceCulture);
             }
