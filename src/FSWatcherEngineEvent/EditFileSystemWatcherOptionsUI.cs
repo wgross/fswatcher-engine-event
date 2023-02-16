@@ -41,9 +41,7 @@ namespace FSWatcherEngineEvent
         private Button ok;
         private Button cancel;
         private RadioGroup delayEventRadio;
-        private Label labelThrottleMs;
         private TextField debounceMs;
-        private Label labelDebounceMs;
 
         public bool Run(FileSystemWatcherOptions options)
         {
