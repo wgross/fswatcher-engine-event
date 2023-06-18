@@ -1,0 +1,3 @@
+[submodule "submodules/PowerShell"]
+	path = submodules/PowerShell
+	url = https://github.com/PowerShell/PowerShell.git

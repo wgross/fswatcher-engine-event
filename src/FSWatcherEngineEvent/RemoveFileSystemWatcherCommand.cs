@@ -1,30 +1,29 @@
 ﻿using System.IO;
 using System.Management.Automation;
 
-namespace FSWatcherEngineEvent
+namespace FSWatcherEngineEvent;
+
+[Cmdlet(VerbsCommon.Remove, nameof(FileSystemWatcher))]
+[OutputType(typeof(FileSystemWatcherState))]
+public sealed class RemoveFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
 {
-    [Cmdlet(VerbsCommon.Remove, nameof(FileSystemWatcher))]
-    [OutputType(typeof(FileSystemWatcherState))]
-    public sealed class RemoveFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
+    [Parameter()]
+    public SwitchParameter UnregisterAll { get; set; }
+
+    protected override void ProcessRecord()
     {
-        [Parameter()]
-        public SwitchParameter UnregisterAll { get; set; }
+        var fileSystemWatcher = this.StopWatching(this.SourceIdentifier);
+        if (fileSystemWatcher is null)
+            return;
 
-        protected override void ProcessRecord()
+        if (this.IsParameterBound(nameof(this.UnregisterAll)))
         {
-            var fileSystemWatcher = this.StopWatching(this.SourceIdentifier);
-            if (fileSystemWatcher is null)
-                return;
-
-            if (this.IsParameterBound(nameof(this.UnregisterAll)))
+            foreach (var subscriber in this.Events.GetEventSubscribers(this.SourceIdentifier))
             {
-                foreach (var subscriber in this.Events.GetEventSubscribers(this.SourceIdentifier))
-                {
-                    Events.UnsubscribeEvent(subscriber);
-                }
+                Events.UnsubscribeEvent(subscriber);
             }
-
-            this.WriteFileSystemWatcherState(fileSystemWatcher);
         }
+
+        this.WriteFileSystemWatcherState(fileSystemWatcher);
     }
 }

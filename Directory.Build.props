@@ -1,0 +1,12 @@
+<Project>
+    <!-- PowerShell as Nuget package -->	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.4" />
+	</ItemGroup>
+	
+	<!--PowerShell as submodule-->
+	<!-- <ItemGroup>
+		<ProjectReference Include="..\..\submodules\PowerShell\src\Microsoft.PowerShell.Commands.Diagnostics\Microsoft.PowerShell.Commands.Diagnostics.csproj" />
+		<ProjectReference Include="..\..\submodules\PowerShell\src\Microsoft.PowerShell.SDK\Microsoft.PowerShell.SDK.csproj" />
+	</ItemGroup> -->
+</Project>

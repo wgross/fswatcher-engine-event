@@ -1,12 +1,11 @@
 ﻿using System.IO;
 using System.Management.Automation;
 
-namespace FSWatcherEngineEvent
+namespace FSWatcherEngineEvent;
+
+[Cmdlet(VerbsLifecycle.Resume, nameof(FileSystemWatcher))]
+[OutputType(typeof(FileSystemWatcherState))]
+public sealed class ResumeFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
 {
-    [Cmdlet(VerbsLifecycle.Resume, nameof(FileSystemWatcher))]
-    [OutputType(typeof(FileSystemWatcherState))]
-    public sealed class ResumeFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
-    {
-        protected override void ProcessRecord() => this.WriteFileSystemWatcherState(this.ResumeWatching(this.SourceIdentifier));
-    }
+    protected override void ProcessRecord() => this.WriteFileSystemWatcherState(this.ResumeWatching(this.SourceIdentifier));
 }

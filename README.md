@@ -6,6 +6,8 @@ For a quick walkthru: https://devblogs.microsoft.com/powershell-community/a-reus
 
 A new event handler can be created with the cmdlet ```New-FileSystemWatcher```:
 
+[![CodeFactor](https://www.codefactor.io/repository/github/wgross/fswatcher-engine-event/badge/main)](https://www.codefactor.io/repository/github/wgross/fswatcher-engine-event/overview/main)
+
 ## How to Install
 
 FSWatcherEngineEvent is published to the [Powershell Gallery](https://www.powershellgallery.com/packages/FSWatcherEngineEvent). To Install it locally use PowerShellGets ```Install-Module``` command:

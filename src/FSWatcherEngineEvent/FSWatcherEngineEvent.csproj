@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <VersionPrefix>1.5.0</VersionPrefix>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
