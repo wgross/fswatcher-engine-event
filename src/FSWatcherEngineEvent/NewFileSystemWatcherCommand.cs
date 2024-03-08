@@ -45,7 +45,7 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     [Parameter(HelpMessage = "Collects incoming events for given number of milliseconds and the send them all together one event after timespan has elapsed")]
     public int ThrottleMs { get; set; }
 
-    [Parameter(HelpMessage = "Collects incoming events while event happen within the given timespan. Ff no new event happen they are sent together as one.")]
+    [Parameter(HelpMessage = "Collects incoming events while event happen within the given timespan. If no new event happen they are sent together as one.")]
     public int DebounceMs { get; set; }
 
     [Parameter(HelpMessage = "Show editor UI for file system watcher options")]
