@@ -140,9 +140,9 @@ The structure of the event is different from the notifications without debouncin
 To enable debouncing or throttling specify the method and the time interval as a parameter:
 
 ```powershell
-PS> Register-EngineEvent -SourceIdentifier "myevent" -Action { $event | ConvertTo-Json | Write-Host } -DebounceMs 100
+PS> New-FileSystemWatcher -SourceIdentifier "myevent" -Path c:\temp\files -Action { $event | ConvertTo-Json | Write-Host } -DebounceMs 100
 
-PS> Register-EngineEvent -SourceIdentifier "myevent" -Action { $event | ConvertTo-Json | Write-Host } -ThrottleMs 100
+PS> New-FileSystemWatcher -SourceIdentifier "myevent" -Path c:\temp\files -Action { $event | ConvertTo-Json | Write-Host } -ThrottleMs 100
 ```
 
 ## Suspend and Resume Watching
