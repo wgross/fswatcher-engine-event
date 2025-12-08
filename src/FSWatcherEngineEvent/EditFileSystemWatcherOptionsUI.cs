@@ -50,7 +50,7 @@ public class EditFileSystemWatcherOptionsUI
             Width = Dim.Fill(),
             Height = Dim.Fill()
         };
-        top.Add(CreateWindow());
+        top.Add(this.CreateWindow());
         return top;
     }
 
