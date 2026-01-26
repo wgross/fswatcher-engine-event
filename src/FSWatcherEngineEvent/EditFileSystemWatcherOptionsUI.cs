@@ -1,6 +1,7 @@
 ﻿using NStack;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Terminal.Gui;
 
 namespace FSWatcherEngineEvent;
@@ -78,7 +79,7 @@ public class EditFileSystemWatcherOptionsUI
         this.labelFilter.X = Pos.Left(this.win) + 2;
         this.labelFilter.Y = Pos.Top(this.labelPath) + 2;
 
-        this.filterText = new TextField(this.options.Filter);
+        this.filterText = new TextField(string.Join(";", this.options.Filters));
         this.filterText.X = Pos.Left(this.labelFilter) + 30;
         this.filterText.Y = Pos.Top(this.labelFilter);
         this.filterText.Width = Dim.Sized(30);
@@ -183,7 +184,7 @@ public class EditFileSystemWatcherOptionsUI
 
     private void OnOk()
     {
-        this.options.Filter = this.filterText.Text.ToString();
+        this.options.Filters = this.filterText.Text.ToString().Split(";").Select(f =>f.Trim()).ToArray();
 
         int filters = 0;
         filters |= this.directory.Checked ? (int)NotifyFilters.DirectoryName : filters;
