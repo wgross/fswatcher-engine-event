@@ -6,7 +6,7 @@ public class FileSystemWatcherOptions
 {
     public string Path { get; set; }
 
-    public string Filter { get; set; }
+    public string[] Filters { get; set; }
 
     public NotifyFilters NotifyFilter { get; set; }
 
