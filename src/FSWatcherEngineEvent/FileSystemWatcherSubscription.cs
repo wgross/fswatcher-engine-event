@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Threading.Tasks;
 
@@ -13,7 +14,7 @@ public sealed class FileSystemWatcherSubscription
     internal NotifyFilters NotifyFilter => this.fileSystemWatcher.NotifyFilter;
     internal bool EnableRaisingEvents => this.fileSystemWatcher.EnableRaisingEvents;
     internal bool IncludeSubdirectories => this.fileSystemWatcher.IncludeSubdirectories;
-    internal string Filter => this.fileSystemWatcher.Filter;
+    internal string[] Filter => this.fileSystemWatcher.Filters.ToArray();
 
     private readonly PSEventManager psEventManager;
     private readonly ICommandRuntime commandRuntime;

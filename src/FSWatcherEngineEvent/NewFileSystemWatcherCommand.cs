@@ -1,5 +1,9 @@
 ﻿using Microsoft.PowerShell.Commands;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 
 namespace FSWatcherEngineEvent;
@@ -33,7 +37,7 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     public SwitchParameter IncludeSubdirectories { get; set; }
 
     [Parameter(HelpMessage = "Wild card of files and directory names to include")]
-    public string Filter { get; set; }
+    public string[] Filters { get; set; } = Array.Empty<string>();
 
     [Parameter(HelpMessage = "Type of change to watch for")]
     public NotifyFilters NotifyFilter { get; set; } = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
@@ -132,7 +136,7 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
             var fileSystemWatcherOptions = new FileSystemWatcherOptions
             {
                 Path = resolvedPath,
-                Filter = this.Filter ?? string.Empty,
+                Filters = this.Filters ?? Array.Empty<string>(),
                 NotifyFilter = this.NotifyFilter,
                 IncludeSubdirectories = this.IncludeSubdirectories,
                 ThrottleMs = this.ThrottleMs,
@@ -141,7 +145,7 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
 
             if (new EditFileSystemWatcherOptionsUI().Run(fileSystemWatcherOptions))
             {
-                this.Filter = fileSystemWatcherOptions.Filter;
+                this.Filters = fileSystemWatcherOptions.Filters;
                 this.NotifyFilter = fileSystemWatcherOptions.NotifyFilter;
                 this.IncludeSubdirectories = fileSystemWatcherOptions.IncludeSubdirectories;
                 this.ThrottleMs = fileSystemWatcherOptions.ThrottleMs;
@@ -161,7 +165,8 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
         };
 
         filesystemWatcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
-        filesystemWatcher.Filter = this.Filter;
+        
+        this.Filters.Aggregate(filesystemWatcher.Filters, (c, f) => { c.Add(f); return c; }); 
 
         this.WriteFileSystemWatcherState(
             this.StartWatching(new FileSystemWatcherSubscription(

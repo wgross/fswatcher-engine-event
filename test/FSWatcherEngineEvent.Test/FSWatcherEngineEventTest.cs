@@ -140,6 +140,84 @@ public class FSWatcherEngineEventTest : IDisposable
     }
 
     [Fact]
+    public void Notifies_on_created_file_matches_single_filter ()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter",  "*.txt")
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+        File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+        // ASSERT
+        this.Sleep();
+        this.RemoveFileSystemWatcher();
+
+        Assert.False(this.PowerShell.HadErrors);
+
+        PSObject result = this.ReadResultVariable().Single();
+
+        Assert.IsType<PSVariable>(result.BaseObject);
+
+        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+
+        Assert.NotNull(resultValue);
+
+        var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
+
+        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+        Assert.Equal("test.txt", eventJson.MessageData.Name);
+    }
+
+    [Fact]
+    public void Notifies_on_created_file_matches_multiple_filters()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter", new string[] { "*.jpg", "*.txt" })
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+        File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+        // ASSERT
+        this.Sleep();
+        this.RemoveFileSystemWatcher();
+
+        Assert.False(this.PowerShell.HadErrors);
+
+        PSObject result = this.ReadResultVariable().Single();
+
+        Assert.IsType<PSVariable>(result.BaseObject);
+
+        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+
+        Assert.NotNull(resultValue);
+
+        var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
+
+        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+        Assert.Equal("test.txt", eventJson.MessageData.Name);
+    }
+
+    [Fact]
     public void Notifies_on_changed_file_multiple_times_throttled()
     {
         // ARRANGE
@@ -293,7 +371,7 @@ public class FSWatcherEngineEventTest : IDisposable
         Assert.Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)), ignoreCase: true);
         Assert.Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
         Assert.Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
-        Assert.Equal("*", result.Property<string>(nameof(FileSystemWatcherState.Filter)));
+        Assert.Equal([], result.Property<string[]>(nameof(FileSystemWatcherState.Filter)));
         Assert.True(result.Property<bool>(nameof(FileSystemWatcherState.EnableRaisingEvents)));
         Assert.False(result.Property<bool>(nameof(FileSystemWatcherState.IncludeSubdirectories)));
     }
@@ -325,6 +403,72 @@ public class FSWatcherEngineEventTest : IDisposable
         var result = this.ReadResultVariable().ToArray();
 
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public void Notifies_on_created_file_skipped_because_of_filters()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter", new string[] { "*.jpg", "*.png" })
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+        File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+        // ASSERT
+        this.Sleep();
+        this.RemoveFileSystemWatcher();
+
+        Assert.False(this.PowerShell.HadErrors);
+
+        var result = this.ReadResultVariable().ToArray();
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void Reads_file_system_watcher_with_filters()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter", new string[] { "*.jpg",  "*.txt" })
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+
+        this.PowerShell.Commands.Clear();
+        var result = this.PowerShell
+            .AddCommand("Get-FileSystemWatcher")
+            .Invoke()
+            .Single();
+
+        // ASSERT
+        this.RemoveFileSystemWatcher();
+
+        Assert.False(this.PowerShell.HadErrors);
+
+        Assert.IsType<FileSystemWatcherState>(result.BaseObject);
+        Assert.Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)), ignoreCase: true);
+        Assert.Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
+        Assert.Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
+        Assert.Equal(["*.jpg","*.txt"], result.Property<string[]>(nameof(FileSystemWatcherState.Filter)));
+        Assert.True(result.Property<bool>(nameof(FileSystemWatcherState.EnableRaisingEvents)));
+        Assert.False(result.Property<bool>(nameof(FileSystemWatcherState.IncludeSubdirectories)));
     }
 
     [Fact]
