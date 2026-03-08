@@ -35,9 +35,5 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FSWatcherEngineEvent\FSWatcherEngineEvent.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Microsoft.PowerShell.SDK" Version="7.5.4" />
-  </ItemGroup>
   
 </Project>

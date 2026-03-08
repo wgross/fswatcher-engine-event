@@ -1,6 +1,6 @@
 @{
     RootModule = 'FSWatcherEngineEvent.dll'
-    ModuleVersion = '1.6.0'
+    ModuleVersion = '2.0.0'
     GUID = 'cea9a314-3e4c-4080-9a0b-5a867efa61f3'
     Author = 'github.com/wgross'
     Copyright = '(c) github.com/wgross. All rights reserved.'
@@ -24,7 +24,7 @@
             1.3: remove file system listener when removing the module from the session
             1.4: presents small text UI for editing watcher parameters before create
             1.5: throttling and debouncing of events
-            1.6: upgrade to net10, mutiple filters supported
+            2.0: upgrade to net10, mutiple filters supported, config UI removed
 "@
         }
     }

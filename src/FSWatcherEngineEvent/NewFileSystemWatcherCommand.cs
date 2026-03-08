@@ -52,9 +52,6 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     [Parameter(HelpMessage = "Collects incoming events while event happen within the given timespan. If no new event happen they are sent together as one.")]
     public int DebounceMs { get; set; }
 
-    [Parameter(HelpMessage = "Show editor UI for file system watcher options")]
-    public SwitchParameter EditOptions { get; set; }
-
     protected override void BeginProcessing()
     {
         if (psModuleInfo is null)
@@ -128,34 +125,6 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
                 targetObject: default));
 
             return false;
-        }
-
-        // Show options UI if required
-        if (this.EditOptions.IsPresent)
-        {
-            var fileSystemWatcherOptions = new FileSystemWatcherOptions
-            {
-                Path = resolvedPath,
-                Filters = this.Filters ?? Array.Empty<string>(),
-                NotifyFilter = this.NotifyFilter,
-                IncludeSubdirectories = this.IncludeSubdirectories,
-                ThrottleMs = this.ThrottleMs,
-                DebounceMs = this.DebounceMs
-            };
-
-            if (new EditFileSystemWatcherOptionsUI().Run(fileSystemWatcherOptions))
-            {
-                this.Filters = fileSystemWatcherOptions.Filters;
-                this.NotifyFilter = fileSystemWatcherOptions.NotifyFilter;
-                this.IncludeSubdirectories = fileSystemWatcherOptions.IncludeSubdirectories;
-                this.ThrottleMs = fileSystemWatcherOptions.ThrottleMs;
-                this.DebounceMs = fileSystemWatcherOptions.DebounceMs;
-            }
-            else
-            {
-                this.WriteWarning(Resources.Message_EditingCanceledByUser);
-                return false;
-            }
         }
 
         var filesystemWatcher = new FileSystemWatcher

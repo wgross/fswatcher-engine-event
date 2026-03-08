@@ -1,8 +1,9 @@
 <Project>
     <!-- PowerShell as Nuget package -->	
 	<ItemGroup>
-		<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.2.4" />
-	</ItemGroup>
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.0-rc.1" />
+  </ItemGroup>
+
 	
 	<!--PowerShell as submodule-->
 	<!-- <ItemGroup>
