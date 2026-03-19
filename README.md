@@ -32,7 +32,9 @@ If you wish to watch subdirectories, you can add `-IncludeSubdirectories` as a s
 PS> New-FileSystemWatcher -SourceIdentifier "myevent" -Path c:\temp\files -IncludeSubdirectories
 ```
 
-Since Version 1.4 the option `-EditOptions` presents a small text UI in the terminal where the notification parameters (Filter, notification flags, include/exclude sub dirs) can be set interactively.
+~~Since Version 1.4 the option `-EditOptions` presents a small text UI in the terminal where the notification parameters (Filter, notification flags, include/exclude sub dirs) can be set interactively.~~
+
+**This option was removed in version 2.0.**
 
 To receive the event an event handler must be registered for the source identifier. Powershell will write the subscription to the pipe.
 
@@ -112,6 +114,16 @@ EnableRaisingEvents   : True
 IncludeSubdirectories : False
 Filter                : *
 ```
+
+## Filter Files
+
+Since version 2.0 multiple wildcards can be specified with creation of a file system watcher using the `-Filters` parameter. Before that only one wildcard cound be specified with te `-Filter` argument.
+```powershell
+PS> New-FileSystemWatcher -SourceIdentifier "myevent" -Path c:\temp\files -Filters "*.txt","*.md" -Action { $event | ConvertTo-Json | Write-Host }
+```
+
+> [!IMPORTANT] 
+> **Breaking change**: For this feature the module relies on the extended API of .Net 10 and is therefore no longer compatible with .netstandard 2.0 and PowerShell 5 or PowerShell <7.6.
 
 ## Debounce or Throttle Notifications
 

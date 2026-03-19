@@ -1,5 +1,9 @@
 ﻿using Microsoft.PowerShell.Commands;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 
 namespace FSWatcherEngineEvent;
@@ -33,7 +37,7 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     public SwitchParameter IncludeSubdirectories { get; set; }
 
     [Parameter(HelpMessage = "Wild card of files and directory names to include")]
-    public string Filter { get; set; }
+    public string[] Filters { get; set; } = Array.Empty<string>();
 
     [Parameter(HelpMessage = "Type of change to watch for")]
     public NotifyFilters NotifyFilter { get; set; } = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
@@ -47,9 +51,6 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
 
     [Parameter(HelpMessage = "Collects incoming events while event happen within the given timespan. If no new event happen they are sent together as one.")]
     public int DebounceMs { get; set; }
-
-    [Parameter(HelpMessage = "Show editor UI for file system watcher options")]
-    public SwitchParameter EditOptions { get; set; }
 
     protected override void BeginProcessing()
     {
@@ -126,34 +127,6 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
             return false;
         }
 
-        // Show options UI if required
-        if (this.EditOptions.IsPresent)
-        {
-            var fileSystemWatcherOptions = new FileSystemWatcherOptions
-            {
-                Path = resolvedPath,
-                Filter = this.Filter ?? string.Empty,
-                NotifyFilter = this.NotifyFilter,
-                IncludeSubdirectories = this.IncludeSubdirectories,
-                ThrottleMs = this.ThrottleMs,
-                DebounceMs = this.DebounceMs
-            };
-
-            if (new EditFileSystemWatcherOptionsUI().Run(fileSystemWatcherOptions))
-            {
-                this.Filter = fileSystemWatcherOptions.Filter;
-                this.NotifyFilter = fileSystemWatcherOptions.NotifyFilter;
-                this.IncludeSubdirectories = fileSystemWatcherOptions.IncludeSubdirectories;
-                this.ThrottleMs = fileSystemWatcherOptions.ThrottleMs;
-                this.DebounceMs = fileSystemWatcherOptions.DebounceMs;
-            }
-            else
-            {
-                this.WriteWarning(Resources.Message_EditingCanceledByUser);
-                return false;
-            }
-        }
-
         var filesystemWatcher = new FileSystemWatcher
         {
             Path = resolvedPath,
@@ -161,7 +134,8 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
         };
 
         filesystemWatcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
-        filesystemWatcher.Filter = this.Filter;
+        
+        this.Filters.Aggregate(filesystemWatcher.Filters, (c, f) => { c.Add(f); return c; }); 
 
         this.WriteFileSystemWatcherState(
             this.StartWatching(new FileSystemWatcherSubscription(

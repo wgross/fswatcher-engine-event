@@ -1,11 +1,11 @@
 @{
     RootModule = 'FSWatcherEngineEvent.dll'
-    ModuleVersion = '1.5.0'
+    ModuleVersion = '2.0.0'
     GUID = 'cea9a314-3e4c-4080-9a0b-5a867efa61f3'
     Author = 'github.com/wgross'
     Copyright = '(c) github.com/wgross. All rights reserved.'
     Description = 'Provide file system change notifications as PowerShell engine events'
-    PowershellHostVersion="5.1"
+    PowershellHostVersion="7.6"
     CmdletsToExport = @(
         'New-FileSystemWatcher'
         'Remove-FileSystemWatcher'
@@ -24,6 +24,7 @@
             1.3: remove file system listener when removing the module from the session
             1.4: presents small text UI for editing watcher parameters before create
             1.5: throttling and debouncing of events
+            2.0: upgrade to net10, mutiple filters supported, config UI removed, breaks compatibility to PowerShell 5 an Pwsh below 7.6
 "@
         }
     }

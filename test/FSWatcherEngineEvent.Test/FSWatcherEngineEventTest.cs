@@ -122,21 +122,99 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         PSObject result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
-        Assert.Equal("test.txt", eventJson.MessageData.Name);
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+        Equal("test.txt", eventJson.MessageData.Name);
+    }
+
+    [Fact]
+    public void Notifies_on_created_file_matches_single_filter ()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter",  "*.txt")
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+        File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+        // ASSERT
+        this.Sleep();
+        this.RemoveFileSystemWatcher();
+
+        False(this.PowerShell.HadErrors);
+
+        PSObject result = this.ReadResultVariable().Single();
+
+        IsType<PSVariable>(result.BaseObject);
+
+        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+
+        NotNull(resultValue);
+
+        var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
+
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+        Equal("test.txt", eventJson.MessageData.Name);
+    }
+
+    [Fact]
+    public void Notifies_on_created_file_matches_multiple_filters()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter", new string[] { "*.jpg", "*.txt" })
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+        File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+        // ASSERT
+        this.Sleep();
+        this.RemoveFileSystemWatcher();
+
+        False(this.PowerShell.HadErrors);
+
+        PSObject result = this.ReadResultVariable().Single();
+
+        IsType<PSVariable>(result.BaseObject);
+
+        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+
+        NotNull(resultValue);
+
+        var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
+
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+        Equal("test.txt", eventJson.MessageData.Name);
     }
 
     [Fact]
@@ -164,22 +242,22 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultCollection().Single();
 
         var result_collection = ((PSVariable)result.BaseObject).Value as Array;
 
-        Assert.Single(result_collection);
+        Single(result_collection);
 
         var eventJson = JsonSerializer.Deserialize<MultiEventJson>(result_collection.GetValue(0).ToString());
 
-        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData[0].ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test1.txt"), eventJson.MessageData[0].FullPath);
-        Assert.Equal("test1.txt", eventJson.MessageData[0].Name);
-        Assert.Equal(3, eventJson.MessageData.Length);
-        Assert.All(eventJson.MessageData.Select(e => e.ChangeType), ct => Assert.Equal(4, ct));
-        Assert.Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData[0].ChangeType);
+        Equal(this.ArrangeFilePath("test1.txt"), eventJson.MessageData[0].FullPath);
+        Equal("test1.txt", eventJson.MessageData[0].Name);
+        Equal(3, eventJson.MessageData.Length);
+        All(eventJson.MessageData.Select(e => e.ChangeType), ct => Equal(4, ct));
+        Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
     }
 
     [Fact]
@@ -207,22 +285,22 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultCollection().Single();
 
         var result_collection = ((PSVariable)result.BaseObject).Value as Array;
 
-        Assert.Single(result_collection);
+        Single(result_collection);
 
         var eventJson = JsonSerializer.Deserialize<MultiEventJson>(result_collection.GetValue(0).ToString());
 
-        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData[0].ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test1.txt"), eventJson.MessageData[0].FullPath);
-        Assert.Equal("test1.txt", eventJson.MessageData[0].Name);
-        Assert.Equal(3, eventJson.MessageData.Length);
-        Assert.All(eventJson.MessageData.Select(e => e.ChangeType), ct => Assert.Equal(4, ct));
-        Assert.Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData[0].ChangeType);
+        Equal(this.ArrangeFilePath("test1.txt"), eventJson.MessageData[0].FullPath);
+        Equal("test1.txt", eventJson.MessageData[0].Name);
+        Equal(3, eventJson.MessageData.Length);
+        All(eventJson.MessageData.Select(e => e.ChangeType), ct => Equal(4, ct));
+        Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
     }
 
     [Fact]
@@ -245,21 +323,21 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         PSObject result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
-        Assert.Equal("test.txt", eventJson.MessageData.Name);
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath);
+        Equal("test.txt", eventJson.MessageData.Name);
     }
 
     [Fact]
@@ -287,15 +365,15 @@ public class FSWatcherEngineEventTest : IDisposable
         // ASSERT
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
-        Assert.IsType<FileSystemWatcherState>(result.BaseObject);
-        Assert.Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)), ignoreCase: true);
-        Assert.Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
-        Assert.Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
-        Assert.Equal("*", result.Property<string>(nameof(FileSystemWatcherState.Filter)));
-        Assert.True(result.Property<bool>(nameof(FileSystemWatcherState.EnableRaisingEvents)));
-        Assert.False(result.Property<bool>(nameof(FileSystemWatcherState.IncludeSubdirectories)));
+        IsType<FileSystemWatcherState>(result.BaseObject);
+        Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)), ignoreCase: true);
+        Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
+        Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
+        Equal([], result.Property<string[]>(nameof(FileSystemWatcherState.Filter)));
+        True(result.Property<bool>(nameof(FileSystemWatcherState.EnableRaisingEvents)));
+        False(result.Property<bool>(nameof(FileSystemWatcherState.IncludeSubdirectories)));
     }
 
     [Fact]
@@ -320,11 +398,77 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable().ToArray();
 
-        Assert.Empty(result);
+        Empty(result);
+    }
+
+    [Fact]
+    public void Notifies_on_created_file_skipped_because_of_filters()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter", new string[] { "*.jpg", "*.png" })
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+        File.WriteAllText(this.ArrangeFilePath("test.txt"), Guid.NewGuid().ToString());
+
+        // ASSERT
+        this.Sleep();
+        this.RemoveFileSystemWatcher();
+
+        False(this.PowerShell.HadErrors);
+
+        var result = this.ReadResultVariable().ToArray();
+
+        Empty(result);
+    }
+
+    [Fact]
+    public void Reads_file_system_watcher_with_filters()
+    {
+        // ARRANGE
+        this.PowerShell.Commands.Clear();
+        this.PowerShell
+            .AddCommand("New-FileSystemWatcher")
+            .AddParameter("Path", this.rootDirectory.FullName)
+            .AddParameter("SourceIdentifier", this.sourceIdentifier)
+            .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
+            .AddParameter("Filter", new string[] { "*.jpg",  "*.txt" })
+            .Invoke();
+
+        this.ArrangeEngineEvent();
+
+        // ACT
+
+        this.PowerShell.Commands.Clear();
+        var result = this.PowerShell
+            .AddCommand("Get-FileSystemWatcher")
+            .Invoke()
+            .Single();
+
+        // ASSERT
+        this.RemoveFileSystemWatcher();
+
+        False(this.PowerShell.HadErrors);
+
+        IsType<FileSystemWatcherState>(result.BaseObject);
+        Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)), ignoreCase: true);
+        Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
+        Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
+        Equal(["*.jpg","*.txt"], result.Property<string[]>(nameof(FileSystemWatcherState.Filter)));
+        True(result.Property<bool>(nameof(FileSystemWatcherState.EnableRaisingEvents)));
+        False(result.Property<bool>(nameof(FileSystemWatcherState.IncludeSubdirectories)));
     }
 
     [Fact]
@@ -357,12 +501,12 @@ public class FSWatcherEngineEventTest : IDisposable
         this.PowerShell.Commands.Clear();
         this.PowerShell.AddCommand("Get-EventSubscriber").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
 
-        Assert.True(this.PowerShell.HadErrors);
-        Assert.Equal($"Event subscription with source identifier '{this.sourceIdentifier}' does not exist.", this.PowerShell.Streams.Error.ReadAll().Single().ToString());
+        True(this.PowerShell.HadErrors);
+        Equal($"Event subscription with source identifier '{this.sourceIdentifier}' does not exist.", this.PowerShell.Streams.Error.ReadAll().Single().ToString());
 
         var result = this.ReadResultVariable();
 
-        Assert.Empty(result);
+        Empty(result);
     }
 
     [Fact]
@@ -391,11 +535,11 @@ public class FSWatcherEngineEventTest : IDisposable
         this.PowerShell.Commands.Clear();
         this.PowerShell.AddCommand("Unregister-Event").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable();
 
-        Assert.Empty(result);
+        Empty(result);
     }
 
     [Fact]
@@ -427,21 +571,21 @@ public class FSWatcherEngineEventTest : IDisposable
         this.PowerShell.Commands.Clear();
         this.PowerShell.AddCommand("Unregister-Event").AddParameter("SourceIdentifier", this.sourceIdentifier).Invoke();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         PSObject result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
-        Assert.Equal("test.txt", eventJson.MessageData.Name);
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
+        Equal("test.txt", eventJson.MessageData.Name);
     }
 
     [Fact]
@@ -457,12 +601,12 @@ public class FSWatcherEngineEventTest : IDisposable
             .Invoke();
 
         // ASSERT
-        Assert.True(this.PowerShell.HadErrors);
-        Assert.Equal("path-invalid,FSWatcherEngineEvent.NewFileSystemWatcherCommand", this.PowerShell.Streams.Error.Single().FullyQualifiedErrorId);
+        True(this.PowerShell.HadErrors);
+        Equal("path-invalid,FSWatcherEngineEvent.NewFileSystemWatcherCommand", this.PowerShell.Streams.Error.Single().FullyQualifiedErrorId);
 
         var result = this.ReadResultVariable().ToArray();
 
-        Assert.Empty(result);
+        Empty(result);
     }
 
     [Fact(Skip = "deleting the watched directory breaks the PowerShell")]
@@ -485,7 +629,7 @@ public class FSWatcherEngineEventTest : IDisposable
 
         // ASSERT
         // PowerShell doesn't show a failure state but the pipeline is closed now.
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
     }
 
     [Fact]
@@ -508,12 +652,12 @@ public class FSWatcherEngineEventTest : IDisposable
            .Invoke();
 
         // ASSERT
-        Assert.True(this.PowerShell.HadErrors);
-        Assert.Equal("subscriptionidentifier-duplicate,FSWatcherEngineEvent.NewFileSystemWatcherCommand", this.PowerShell.Streams.Error.Single().FullyQualifiedErrorId);
+        True(this.PowerShell.HadErrors);
+        Equal("subscriptionidentifier-duplicate,FSWatcherEngineEvent.NewFileSystemWatcherCommand", this.PowerShell.Streams.Error.Single().FullyQualifiedErrorId);
 
         var result = this.ReadResultVariable().ToArray();
 
-        Assert.Empty(result);
+        Empty(result);
     }
 
     [Fact]
@@ -539,21 +683,21 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
-        Assert.Equal("test.txt", eventJson.MessageData.Name);
+        Equal(WatcherChangeTypes.Changed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
+        Equal("test.txt", eventJson.MessageData.Name);
     }
 
     [Fact]
@@ -580,23 +724,23 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test-changed.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
-        Assert.Equal("test-changed.txt", eventJson.MessageData.Name);
-        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.OldFullPath, ignoreCase: true);
-        Assert.Equal("test.txt", eventJson.MessageData.OldName);
+        Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test-changed.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
+        Equal("test-changed.txt", eventJson.MessageData.Name);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.OldFullPath, ignoreCase: true);
+        Equal("test.txt", eventJson.MessageData.OldName);
     }
 
     [Fact]
@@ -622,21 +766,21 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Deleted, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
-        Assert.Equal("test.txt", eventJson.MessageData.Name);
+        Equal(WatcherChangeTypes.Deleted, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("test.txt"), eventJson.MessageData.FullPath, ignoreCase: true);
+        Equal("test.txt", eventJson.MessageData.Name);
     }
 
     [Fact]
@@ -661,21 +805,21 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Created, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(subdir.FullName, eventJson.MessageData.FullPath, ignoreCase: true);
-        Assert.Equal(subdir.Name, eventJson.MessageData.Name);
+        Equal(WatcherChangeTypes.Created, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(subdir.FullName, eventJson.MessageData.FullPath, ignoreCase: true);
+        Equal(subdir.Name, eventJson.MessageData.Name);
     }
 
     [Fact]
@@ -702,21 +846,21 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Deleted, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(subdir.FullName, eventJson.MessageData.FullPath, ignoreCase: true);
-        Assert.Equal(subdir.Name, eventJson.MessageData.Name);
+        Equal(WatcherChangeTypes.Deleted, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(subdir.FullName, eventJson.MessageData.FullPath, ignoreCase: true);
+        Equal(subdir.Name, eventJson.MessageData.Name);
     }
 
     [Fact]
@@ -743,23 +887,23 @@ public class FSWatcherEngineEventTest : IDisposable
         this.Sleep();
         this.RemoveFileSystemWatcher();
 
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
 
         var result = this.ReadResultVariable().Single();
 
-        Assert.IsType<PSVariable>(result.BaseObject);
+        IsType<PSVariable>(result.BaseObject);
 
         var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
 
-        Assert.NotNull(resultValue);
+        NotNull(resultValue);
 
         var eventJson = JsonSerializer.Deserialize<EventJson>(resultValue.ToString());
 
-        Assert.Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
-        Assert.Equal(this.ArrangeFilePath("subdir-changed"), eventJson.MessageData.FullPath, ignoreCase: true);
-        Assert.Equal("subdir-changed", eventJson.MessageData.Name);
-        Assert.Equal(this.ArrangeFilePath("subdir"), eventJson.MessageData.OldFullPath, ignoreCase: true);
-        Assert.Equal("subdir", eventJson.MessageData.OldName);
+        Equal(WatcherChangeTypes.Renamed, (WatcherChangeTypes)eventJson.MessageData.ChangeType);
+        Equal(this.ArrangeFilePath("subdir-changed"), eventJson.MessageData.FullPath, ignoreCase: true);
+        Equal("subdir-changed", eventJson.MessageData.Name);
+        Equal(this.ArrangeFilePath("subdir"), eventJson.MessageData.OldFullPath, ignoreCase: true);
+        Equal("subdir", eventJson.MessageData.OldName);
     }
 
     [Fact]
@@ -784,6 +928,6 @@ public class FSWatcherEngineEventTest : IDisposable
             .Invoke();
 
         // ASSERT
-        Assert.False(this.PowerShell.HadErrors);
+        False(this.PowerShell.HadErrors);
     }
 }
