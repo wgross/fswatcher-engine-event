@@ -33,7 +33,8 @@ PS> New-FileSystemWatcher -SourceIdentifier "myevent" -Path c:\temp\files -Inclu
 ```
 
 ~~Since Version 1.4 the option `-EditOptions` presents a small text UI in the terminal where the notification parameters (Filter, notification flags, include/exclude sub dirs) can be set interactively.~~
-**This options was rmove in version 2.0**
+
+**This option was removed in version 2.0.**
 
 To receive the event an event handler must be registered for the source identifier. Powershell will write the subscription to the pipe.
 
@@ -121,8 +122,8 @@ Since version 2.0 multiple wildcards can be specified with creation of a file sy
 PS> New-FileSystemWatcher -SourceIdentifier "myevent" -Path c:\temp\files -Filters "*.txt","*.md" -Action { $event | ConvertTo-Json | Write-Host }
 ```
 
-> [!note] Breaking change
-> For the feature the module relies on the extended API of .Net 10 and is therefore no longer compatible with .netstadad 2.0 and PowerShell 5 or PowerShell <7.6.
+> [!IMPORTANT] 
+> **Breaking change**: For this feature the module relies on the extended API of .Net 10 and is therefore no longer compatible with .netstandard 2.0 and PowerShell 5 or PowerShell <7.6.
 
 ## Debounce or Throttle Notifications
 

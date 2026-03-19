@@ -5,7 +5,7 @@
     Author = 'github.com/wgross'
     Copyright = '(c) github.com/wgross. All rights reserved.'
     Description = 'Provide file system change notifications as PowerShell engine events'
-    PowershellHostVersion="7.4"
+    PowershellHostVersion="7.6"
     CmdletsToExport = @(
         'New-FileSystemWatcher'
         'Remove-FileSystemWatcher'
@@ -24,7 +24,7 @@
             1.3: remove file system listener when removing the module from the session
             1.4: presents small text UI for editing watcher parameters before create
             1.5: throttling and debouncing of events
-            2.0: upgrade to net10, mutiple filters supported, config UI removed
+            2.0: upgrade to net10, mutiple filters supported, config UI removed, breaks compatibility to PowerShell 5 an Pwsh below 7.6
 "@
         }
     }
