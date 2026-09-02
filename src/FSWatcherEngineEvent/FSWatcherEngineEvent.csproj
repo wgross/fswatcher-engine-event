@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.PowerShell.SDK" Version="7.6.0" />
+    <PackageReference Update="Microsoft.PowerShell.SDK" Version="7.6.5" />
   </ItemGroup>
 
 

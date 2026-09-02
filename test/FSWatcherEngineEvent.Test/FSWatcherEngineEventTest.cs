@@ -6,7 +6,7 @@ using System.Management.Automation;
 using System.Text.Json;
 using Xunit;
 
-[assembly: CollectionBehavior(DisableTestParallelization = true)]
+[assembly: CollectionBehavior()]
 
 namespace FSWatcherEngineEvent.Test;
 
@@ -140,7 +140,7 @@ public class FSWatcherEngineEventTest : IDisposable
     }
 
     [Fact]
-    public void Notifies_on_created_file_matches_single_filter ()
+    public void Notifies_on_created_file_matches_single_filter()
     {
         // ARRANGE
         this.PowerShell.Commands.Clear();
@@ -149,7 +149,7 @@ public class FSWatcherEngineEventTest : IDisposable
             .AddParameter("Path", this.rootDirectory.FullName)
             .AddParameter("SourceIdentifier", this.sourceIdentifier)
             .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
-            .AddParameter("Filter",  "*.txt")
+            .AddParameter("Filter", "*.txt")
             .Invoke();
 
         this.ArrangeEngineEvent();
@@ -444,7 +444,7 @@ public class FSWatcherEngineEventTest : IDisposable
             .AddParameter("Path", this.rootDirectory.FullName)
             .AddParameter("SourceIdentifier", this.sourceIdentifier)
             .AddParameter("NotifyFilter", NotifyFilters.LastWrite)
-            .AddParameter("Filter", new string[] { "*.jpg",  "*.txt" })
+            .AddParameter("Filter", new string[] { "*.jpg", "*.txt" })
             .Invoke();
 
         this.ArrangeEngineEvent();
@@ -466,7 +466,7 @@ public class FSWatcherEngineEventTest : IDisposable
         Equal(this.rootDirectory.FullName, result.Property<string>(nameof(FileSystemWatcherState.Path)), ignoreCase: true);
         Equal(this.sourceIdentifier, result.Property<string>(nameof(FileSystemWatcherState.SourceIdentifier)));
         Equal(NotifyFilters.LastWrite, result.Property<NotifyFilters>(nameof(FileSystemWatcherState.NotifyFilter)));
-        Equal(["*.jpg","*.txt"], result.Property<string[]>(nameof(FileSystemWatcherState.Filter)));
+        Equal(["*.jpg", "*.txt"], result.Property<string[]>(nameof(FileSystemWatcherState.Filter)));
         True(result.Property<bool>(nameof(FileSystemWatcherState.EnableRaisingEvents)));
         False(result.Property<bool>(nameof(FileSystemWatcherState.IncludeSubdirectories)));
     }
