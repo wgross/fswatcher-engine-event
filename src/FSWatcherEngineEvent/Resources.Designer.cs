@@ -19,7 +19,7 @@ namespace FSWatcherEngineEvent {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -57,6 +57,105 @@ namespace FSWatcherEngineEvent {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit.
+        /// </summary>
+        public static string DataGrid_Edit {
+            get {
+                return ResourceManager.GetString("DataGrid.Edit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path.
+        /// </summary>
+        public static string DataGrid_Path {
+            get {
+                return ResourceManager.GetString("DataGrid.Path", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Source Identifier.
+        /// </summary>
+        public static string DataGrid_SourceIdentifier {
+            get {
+                return ResourceManager.GetString("DataGrid.SourceIdentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string Editor_Close {
+            get {
+                return ResourceManager.GetString("Editor.Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable Raising Events:.
+        /// </summary>
+        public static string Editor_EnableRaisingEvents {
+            get {
+                return ResourceManager.GetString("Editor.EnableRaisingEvents", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Filters:.
+        /// </summary>
+        public static string Editor_Filters {
+            get {
+                return ResourceManager.GetString("Editor.Filters", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Include Subdirectories:.
+        /// </summary>
+        public static string Editor_IncludeSubdirectories {
+            get {
+                return ResourceManager.GetString("Editor_IncludeSubdirectories", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Notify Filters:.
+        /// </summary>
+        public static string Editor_NotifyFilters {
+            get {
+                return ResourceManager.GetString("Editor.NotifyFilters", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path:.
+        /// </summary>
+        public static string Editor_Path {
+            get {
+                return ResourceManager.GetString("Editor.Path", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Source Identifier:.
+        /// </summary>
+        public static string Editor_SourceIdentifier {
+            get {
+                return ResourceManager.GetString("Editor.SourceIdentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit &quot;{0}&quot;.
+        /// </summary>
+        public static string Editor_Title {
+            get {
+                return ResourceManager.GetString("Editor.Title", resourceCulture);
             }
         }
         

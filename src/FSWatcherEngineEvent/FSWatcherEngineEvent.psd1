@@ -12,6 +12,7 @@
         'Suspend-FileSystemWatcher'
         'Resume-FileSystemWatcher'
         'Get-FileSystemWatcher'
+        'Edit-FileSystemWatcher'
     )
     PrivateData = @{
         PSData = @{

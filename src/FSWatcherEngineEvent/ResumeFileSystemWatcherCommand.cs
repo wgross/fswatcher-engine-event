@@ -7,5 +7,5 @@ namespace FSWatcherEngineEvent;
 [OutputType(typeof(FileSystemWatcherState))]
 public sealed class ResumeFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
 {
-    protected override void ProcessRecord() => this.WriteFileSystemWatcherState(this.ResumeWatching(this.SourceIdentifier));
+    protected override void ProcessRecord() => this.WriteFileSystemWatcherState(ResumeWatching(this.SourceIdentifier));
 }

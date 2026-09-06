@@ -5,8 +5,16 @@
     <VersionPrefix>2.0.0</VersionPrefix>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="XenoAtom.Terminal.UI" Version="3.9.0" />
+  </ItemGroup>
 
-
+  <PropertyGroup>
+    <!-- copy dependencies to the bin folder-->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  
   <ItemGroup>
     <Compile Update="Resources.Designer.cs">
       <DesignTime>True</DesignTime>

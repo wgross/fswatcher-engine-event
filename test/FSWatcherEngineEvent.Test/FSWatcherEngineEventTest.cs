@@ -6,6 +6,9 @@ using System.Management.Automation;
 using System.Text.Json;
 using Xunit;
 
+#pragma warning disable CA1861 // no need for list for test data
+#pragma warning disable xUnit1004 // keep skip here for now, the test is not working
+
 [assembly: CollectionBehavior()]
 
 namespace FSWatcherEngineEvent.Test;
@@ -124,11 +127,9 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        PSObject result = this.ReadResultVariable().Single();
+        PSObject result = Single(this.ReadResultVariable());
 
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -163,11 +164,9 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        PSObject result = this.ReadResultVariable().Single();
+        PSObject result = Single(this.ReadResultVariable());
 
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -202,11 +201,9 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        PSObject result = this.ReadResultVariable().Single();
+        PSObject result = Single(this.ReadResultVariable());
 
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -257,7 +254,7 @@ public class FSWatcherEngineEventTest : IDisposable
         Equal("test1.txt", eventJson.MessageData[0].Name);
         Equal(3, eventJson.MessageData.Length);
         All(eventJson.MessageData.Select(e => e.ChangeType), ct => Equal(4, ct));
-        Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
+        Equal(["test1.txt", "test2.txt", "test3.txt"], eventJson.MessageData.Select(a => a.Name));
     }
 
     [Fact]
@@ -300,7 +297,7 @@ public class FSWatcherEngineEventTest : IDisposable
         Equal("test1.txt", eventJson.MessageData[0].Name);
         Equal(3, eventJson.MessageData.Length);
         All(eventJson.MessageData.Select(e => e.ChangeType), ct => Equal(4, ct));
-        Equal(new[] { "test1.txt", "test2.txt", "test3.txt" }, eventJson.MessageData.Select(a => a.Name));
+        Equal(["test1.txt", "test2.txt", "test3.txt"], eventJson.MessageData.Select(a => a.Name));
     }
 
     [Fact]
@@ -325,11 +322,8 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        PSObject result = this.ReadResultVariable().Single();
-
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var result = Single(this.ReadResultVariable());
+        var resultValue = (PSObject)(IsType<PSVariable>(result.BaseObject)).Value;
 
         NotNull(resultValue);
 
@@ -575,9 +569,7 @@ public class FSWatcherEngineEventTest : IDisposable
 
         PSObject result = this.ReadResultVariable().Single();
 
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -687,9 +679,7 @@ public class FSWatcherEngineEventTest : IDisposable
 
         var result = this.ReadResultVariable().Single();
 
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -717,7 +707,6 @@ public class FSWatcherEngineEventTest : IDisposable
         this.ArrangeEngineEvent();
 
         // ACT
-        var file = new FileInfo(this.ArrangeFilePath("test.txt"));
         File.Move(this.ArrangeFilePath("test.txt"), this.ArrangeFilePath("test-changed.txt"));
 
         // ASSERT
@@ -726,11 +715,8 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        var result = this.ReadResultVariable().Single();
-
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var result = Single(this.ReadResultVariable());
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -770,9 +756,7 @@ public class FSWatcherEngineEventTest : IDisposable
 
         var result = this.ReadResultVariable().Single();
 
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -807,11 +791,8 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        var result = this.ReadResultVariable().Single();
-
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var result = Single(this.ReadResultVariable());
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -848,11 +829,8 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        var result = this.ReadResultVariable().Single();
-
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var result = Single(this.ReadResultVariable());
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -889,11 +867,8 @@ public class FSWatcherEngineEventTest : IDisposable
 
         False(this.PowerShell.HadErrors);
 
-        var result = this.ReadResultVariable().Single();
-
-        IsType<PSVariable>(result.BaseObject);
-
-        var resultValue = (PSObject)((PSVariable)result.BaseObject).Value;
+        var result = Single(this.ReadResultVariable());
+        var resultValue = IsType<PSObject>(IsType<PSVariable>(result.BaseObject).Value);
 
         NotNull(resultValue);
 
@@ -922,7 +897,8 @@ public class FSWatcherEngineEventTest : IDisposable
 
         // ACT
         this.PowerShell.Commands.Clear();
-        var result = this.PowerShell
+
+        this.PowerShell
             .AddCommand("Remove-Module")
             .AddParameter("Name", "FSWatcherEngineEvent")
             .Invoke();

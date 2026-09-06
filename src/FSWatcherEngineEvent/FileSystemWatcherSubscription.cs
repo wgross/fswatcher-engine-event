@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Management.Automation;
 using System.Threading.Tasks;
 
@@ -9,18 +8,22 @@ namespace FSWatcherEngineEvent;
 
 public sealed class FileSystemWatcherSubscription
 {
+    internal FileSystemWatcher FileSystemWatcher { get; } = null;
+
     internal string SourceIdentifier { get; }
-    internal string Path => this.fileSystemWatcher.Path;
-    internal NotifyFilters NotifyFilter => this.fileSystemWatcher.NotifyFilter;
-    internal bool EnableRaisingEvents => this.fileSystemWatcher.EnableRaisingEvents;
-    internal bool IncludeSubdirectories => this.fileSystemWatcher.IncludeSubdirectories;
-    internal string[] Filter => this.fileSystemWatcher.Filters.ToArray();
+    internal string Path => this.FileSystemWatcher.Path;
+    internal NotifyFilters NotifyFilter => this.FileSystemWatcher.NotifyFilter;
+    internal bool EnableRaisingEvents => this.FileSystemWatcher.EnableRaisingEvents;
+    internal bool IncludeSubdirectories => this.FileSystemWatcher.IncludeSubdirectories;
+    internal string[] Filter => [.. this.FileSystemWatcher.Filters];
+
+    internal int NotificationCount { get; set; } = 0;
 
     private readonly PSEventManager psEventManager;
     private readonly ICommandRuntime commandRuntime;
     private readonly int throttleMs;
     private readonly int debounceMs;
-    private readonly FileSystemWatcher fileSystemWatcher;
+
     private readonly Action<FileSystemEventArgs> generateEventDelagate;
 
     public FileSystemWatcherSubscription(
@@ -36,40 +39,40 @@ public sealed class FileSystemWatcherSubscription
         this.commandRuntime = commandRuntime;
         this.throttleMs = throttleMs;
         this.debounceMs = debounceMs;
-        this.fileSystemWatcher = fileSystemWatcher;
+        this.FileSystemWatcher = fileSystemWatcher;
 
         if (this.throttleMs > 0)
-            this.generateEventDelagate = this.Throttle(this.GenerateEvent, TimeSpan.FromMilliseconds(this.throttleMs));
+            this.generateEventDelagate = Throttle(this.GenerateEvent, TimeSpan.FromMilliseconds(this.throttleMs));
         else if (this.debounceMs > 0)
-            this.generateEventDelagate = this.Debounce(this.GenerateEvent, TimeSpan.FromMilliseconds(this.debounceMs));
+            this.generateEventDelagate = Debounce(this.GenerateEvent, TimeSpan.FromMilliseconds(this.debounceMs));
         else
             this.generateEventDelagate = this.GenerateEvent;
     }
 
     internal void StartWatching()
     {
-        this.fileSystemWatcher.Changed += this.OnChanged;
-        this.fileSystemWatcher.Created += this.OnChanged;
-        this.fileSystemWatcher.Deleted += this.OnChanged;
-        this.fileSystemWatcher.Renamed += this.OnRenamed;
-        this.fileSystemWatcher.Error += this.OnError;
-        this.fileSystemWatcher.EnableRaisingEvents = true;
+        this.FileSystemWatcher.Changed += this.OnChanged;
+        this.FileSystemWatcher.Created += this.OnChanged;
+        this.FileSystemWatcher.Deleted += this.OnChanged;
+        this.FileSystemWatcher.Renamed += this.OnRenamed;
+        this.FileSystemWatcher.Error += this.OnError;
+        this.FileSystemWatcher.EnableRaisingEvents = true;
     }
 
-    internal void SuspendWatching() => this.fileSystemWatcher.EnableRaisingEvents = false;
+    internal void SuspendWatching() => this.FileSystemWatcher.EnableRaisingEvents = false;
 
     internal void StopWatching()
     {
-        this.fileSystemWatcher.EnableRaisingEvents = false;
-        this.fileSystemWatcher.Changed -= this.OnChanged;
-        this.fileSystemWatcher.Created -= this.OnChanged;
-        this.fileSystemWatcher.Deleted -= this.OnChanged;
-        this.fileSystemWatcher.Renamed -= this.OnRenamed;
-        this.fileSystemWatcher.Error -= this.OnError;
-        this.fileSystemWatcher.Dispose();
+        this.FileSystemWatcher.EnableRaisingEvents = false;
+        this.FileSystemWatcher.Changed -= this.OnChanged;
+        this.FileSystemWatcher.Created -= this.OnChanged;
+        this.FileSystemWatcher.Deleted -= this.OnChanged;
+        this.FileSystemWatcher.Renamed -= this.OnRenamed;
+        this.FileSystemWatcher.Error -= this.OnError;
+        this.FileSystemWatcher.Dispose();
     }
 
-    internal void ResumeWatching() => this.fileSystemWatcher.EnableRaisingEvents = true;
+    internal void ResumeWatching() => this.FileSystemWatcher.EnableRaisingEvents = true;
 
     private void OnError(object sender, ErrorEventArgs e)
     {
@@ -80,15 +83,29 @@ public sealed class FileSystemWatcherSubscription
             targetObject: sender));
     }
 
-    private void OnRenamed(object sender, RenamedEventArgs e) => this.generateEventDelagate(e);
+    private void OnRenamed(object sender, RenamedEventArgs e)
+    {
+        this.NotificationCount++;
+        this.generateEventDelagate(e);
+    }
 
-    private void OnChanged(object sender, FileSystemEventArgs e) => this.generateEventDelagate(e);
+    private void OnChanged(object sender, FileSystemEventArgs e)
+    {
+        this.NotificationCount++;
+        this.generateEventDelagate(e);
+    }
+
+    private void OnDeleted(object sender, FileSystemEventArgs e)
+    {
+        this.NotificationCount++;
+        this.generateEventDelagate(e);
+    }
 
     private void GenerateEvent(List<FileSystemEventArgs> eventArgs)
     {
         this.psEventManager.GenerateEvent(
             sourceIdentifier: this.SourceIdentifier,
-            sender: this.fileSystemWatcher,
+            sender: this.FileSystemWatcher,
             args: null,
             extraData: PSObject.AsPSObject(eventArgs.AsReadOnly()));
     }
@@ -97,12 +114,12 @@ public sealed class FileSystemWatcherSubscription
     {
         this.psEventManager.GenerateEvent(
             sourceIdentifier: this.SourceIdentifier,
-            sender: this.fileSystemWatcher,
+            sender: this.FileSystemWatcher,
             args: null,
             extraData: PSObject.AsPSObject(eventArgs));
     }
 
-    private Action<FileSystemEventArgs> Throttle(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
+    private static Action<FileSystemEventArgs> Throttle(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
     {
         // captured in closure:
         Task task = null;
@@ -110,7 +127,7 @@ public sealed class FileSystemWatcherSubscription
         var l = new object();
         var args = new List<FileSystemEventArgs>();
 
-        return (FileSystemEventArgs e) =>
+        return e =>
         {
             // the latest calling args are kept for later use
             args.Add(e);
@@ -133,17 +150,16 @@ public sealed class FileSystemWatcherSubscription
 
                     action(tmp);
 
-                    args = new List<FileSystemEventArgs>();
+                    args = [];
                     task = null;
                 });
             }
         };
     }
 
-    private Action<FileSystemEventArgs> Debounce(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
+    private static Action<FileSystemEventArgs> Debounce(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
     {
-        if (action is null)
-            throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         var last = 0;
         var args = new List<FileSystemEventArgs>();
@@ -165,7 +181,7 @@ public sealed class FileSystemWatcherSubscription
 
                     action(tmp);
 
-                    args = new List<FileSystemEventArgs>();
+                    args = [];
                 }
             });
         };

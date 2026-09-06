@@ -12,7 +12,7 @@ public sealed class RemoveFileSystemWatcherCommand : ModifyingFileSystemWatcherC
 
     protected override void ProcessRecord()
     {
-        var fileSystemWatcher = this.StopWatching(this.SourceIdentifier);
+        var fileSystemWatcher = StopWatching(this.SourceIdentifier);
         if (fileSystemWatcher is null)
             return;
 

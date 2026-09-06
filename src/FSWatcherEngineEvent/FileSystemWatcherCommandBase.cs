@@ -5,16 +5,16 @@ namespace FSWatcherEngineEvent;
 
 public abstract class FileSystemWatcherCommandBase : PSCmdlet
 {
-    protected static Dictionary<string, FileSystemWatcherSubscription> FileSystemWatchers { get; } = new Dictionary<string, FileSystemWatcherSubscription>();
+    protected static Dictionary<string, FileSystemWatcherSubscription> FileSystemWatchers { get; } = [];
 
-    protected FileSystemWatcherState StartWatching(FileSystemWatcherSubscription fileSystemWatcherSubscription)
+    protected static FileSystemWatcherState StartWatching(FileSystemWatcherSubscription fileSystemWatcherSubscription)
     {
         FileSystemWatchers.Add(fileSystemWatcherSubscription.SourceIdentifier, fileSystemWatcherSubscription);
         fileSystemWatcherSubscription.StartWatching();
         return ConvertToFileSystemWatcherInfo(fileSystemWatcherSubscription);
     }
 
-    protected FileSystemWatcherState StopWatching(string sourceIdentifier)
+    protected static FileSystemWatcherState StopWatching(string sourceIdentifier)
     {
         if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
         {
@@ -36,7 +36,7 @@ public abstract class FileSystemWatcherCommandBase : PSCmdlet
         FileSystemWatchers.Clear();
     }
 
-    protected FileSystemWatcherState SuspendWatching(string sourceIdentifier)
+    protected static FileSystemWatcherState SuspendWatching(string sourceIdentifier)
     {
         if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
         {
@@ -46,7 +46,7 @@ public abstract class FileSystemWatcherCommandBase : PSCmdlet
         return null;
     }
 
-    protected FileSystemWatcherState ResumeWatching(string sourceIdentifier)
+    protected static FileSystemWatcherState ResumeWatching(string sourceIdentifier)
     {
         if (FileSystemWatchers.TryGetValue(sourceIdentifier, out var watcher))
         {

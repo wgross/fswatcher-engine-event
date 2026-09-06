@@ -1,1 +1,1 @@
-pwsh.exe -Interactive -NoExit -WorkingDirectory $PSScriptRoot -File $PSScriptRoot/init.ps1
+pwsh.exe -Interactive -NoExit -NoProfile -WorkingDirectory $PSScriptRoot -File $PSScriptRoot/init.ps1

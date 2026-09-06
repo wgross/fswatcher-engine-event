@@ -1,7 +1,4 @@
 ﻿using Microsoft.PowerShell.Commands;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -37,7 +34,7 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
     public SwitchParameter IncludeSubdirectories { get; set; }
 
     [Parameter(HelpMessage = "Wild card of files and directory names to include")]
-    public string[] Filters { get; set; } = Array.Empty<string>();
+    public string[] Filters { get; set; } = [];
 
     [Parameter(HelpMessage = "Type of change to watch for")]
     public NotifyFilters NotifyFilter { get; set; } = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
@@ -72,7 +69,7 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
 
         // always expand without wildcards. Wildcards belong into the filter
         // https://stackoverflow.com/questions/8505294/how-do-i-deal-with-paths-when-writing-a-powershell-cmdlet
-        var resolvedPath = this.SessionState.Path.GetUnresolvedProviderPathFromPSPath(selectPath(), out var provider, out var drive);
+        var resolvedPath = this.SessionState.Path.GetUnresolvedProviderPathFromPSPath(selectPath(), out var provider, out _);
 
         // break hard if the path isn't pointing to a win32 file system.
         if (provider.ImplementingType != typeof(FileSystemProvider))
@@ -130,15 +127,14 @@ public class NewFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
         var filesystemWatcher = new FileSystemWatcher
         {
             Path = resolvedPath,
-            NotifyFilter = this.NotifyFilter
+            NotifyFilter = this.NotifyFilter,
+            IncludeSubdirectories = this.IncludeSubdirectories.ToBool()
         };
 
-        filesystemWatcher.IncludeSubdirectories = this.IncludeSubdirectories.ToBool();
-        
-        this.Filters.Aggregate(filesystemWatcher.Filters, (c, f) => { c.Add(f); return c; }); 
+        _ = this.Filters.Aggregate(filesystemWatcher.Filters, static (c, f) => { c.Add(f); return c; });
 
         this.WriteFileSystemWatcherState(
-            this.StartWatching(new FileSystemWatcherSubscription(
+            StartWatching(new FileSystemWatcherSubscription(
                 this.SourceIdentifier,
                 this.Events,
                 this.CommandRuntime,
