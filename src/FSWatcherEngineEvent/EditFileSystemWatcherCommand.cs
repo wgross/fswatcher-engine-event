@@ -21,5 +21,5 @@ public sealed class EditFileSystemWatcherCommand : FileSystemWatcherCommandBase
             onUpdate: () => TerminalLoopResult.Continue);
     }
 
-    private static DockLayout MakeFullScreenUi(Visual visual) => new DockLayout().Bottom(new CommandBar()).Content(visual).Style(Theme.Terminal);
+    private static DockLayout MakeFullScreenUi(Visual visual) => new DockLayout().Bottom(new VStack(new Rule(), new CommandBar())).Content(visual).Style(Theme.Terminal);
 }

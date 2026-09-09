@@ -44,7 +44,6 @@ internal sealed class EditFileSystemWatcherView(EditFileSystemWatcherViewModel v
             ShowVerticalLines = true,
             ShowHeaderSeparator = true,
             Glyphs = LineGlyphs.Single,
-            
         });
 
         dataGridControl.Columns.Add(new DataGridColumn<string>
@@ -92,7 +91,7 @@ internal sealed class EditFileSystemWatcherView(EditFileSystemWatcherViewModel v
     private static Dialog MakeFileSystemWatcherEditorDialog(FileSystemWatcherSubscriptionViewModel viewModel) => new Dialog(MakeFileSystemWatcherEditor(viewModel))
         .Title(Resources.Editor_Title.FormatWith(viewModel.SourceIdentifier))
         .MinWidth(75)
-        .Content(new DockLayout().Bottom(new CommandBar()).Content(MakeFileSystemWatcherEditor(viewModel)))
+        .Content(new DockLayout().Bottom(new VStack(new Rule(), new CommandBar())).Content(MakeFileSystemWatcherEditor(viewModel)))
         .IsModal(true)
         .AddCommand(new()
         {
@@ -109,11 +108,11 @@ internal sealed class EditFileSystemWatcherView(EditFileSystemWatcherViewModel v
     private static VStack MakeFileSystemWatcherEditor(FileSystemWatcherSubscriptionViewModel viewModel)
     {
         static TextBlock makeSourceIdentifierView(FileSystemWatcherSubscriptionViewModel viewModel)
-            => new TextBlock().Text(viewModel.SourceIdentifier).TextAlignment(TextAlignment.Left).Margin(new Thickness(2,0,0,0));
+            => new TextBlock().Text(viewModel.SourceIdentifier).TextAlignment(TextAlignment.Left).Margin(new Thickness(2, 0, 0, 0));
         static TextBox makePathEditEdit(FileSystemWatcherSubscriptionViewModel viewModel)
-            => new TextBox().Text(viewModel.Path).TextAlignment(TextAlignment.Left).Margin(new Thickness(1,0,0,0));
+            => new TextBox().Text(viewModel.Path).TextAlignment(TextAlignment.Left).Margin(new Thickness(1, 0, 0, 0));
         static TextBox makeFilterEdit(FileSystemWatcherSubscriptionViewModel viewModel)
-            => new TextBox().Text(viewModel.Filters).TextAlignment(TextAlignment.Left).Margin(new Thickness(1,0,0,0));
+            => new TextBox().Text(viewModel.Filters).TextAlignment(TextAlignment.Left).Margin(new Thickness(1, 0, 0, 0));
         static CheckBox makeEnableRaisingEventsEdit(FileSystemWatcherSubscriptionViewModel viewModel)
             => new CheckBox().IsChecked(viewModel.EnableRaisingEvents).Margin(new Thickness(1, 0, 0, 0));
         static CheckBox makeIncludeSubdirectoriesEdit(FileSystemWatcherSubscriptionViewModel viewModel)
