@@ -26,6 +26,7 @@
             1.4: presents small text UI for editing watcher parameters before create
             1.5: throttling and debouncing of events
             2.0: upgrade to net10, mutiple filters supported, config UI removed, breaks compatibility to PowerShell 5 an Pwsh below 7.6
+            2.1: adds a TUI for editing existing file system watchers
 "@
         }
     }
