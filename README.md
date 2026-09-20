@@ -188,3 +188,20 @@ PS> Remove-FileSystemWatcher -SourceIdentifier "myevent" -UnregisterAll
 ```
 
 Since version 1.3 a call to `New-FileSystemWatcher` registers a script block at PowerShells `Exiting` event to clean up all file system watchers automatically.
+
+## Use the TUI
+
+The module provides a simple text UI to edit and trace a filesystemwatcher.
+To use the TUI invoke `Edit-FileSystemWatcher` with the source identifier of the watcher:
+
+```powershell
+PS> Edit-FileSystemWatcher -SourceIdentifier "myevent"
+```
+
+You can change the properties (excluding the source identifier) interactively in the TUI. The TUI will also show the command to create a new file system watcher with the configured settings for copying to the clipboard.
+
+![see demo](edit-fswatcher.gif)
+
+The Trace tab allows to inspect the genereted change events in real time. Use this to see if teh file system watcher generates the events as expected.
+
+![see demo](trace-fswatcher.gif)

@@ -2,37 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using XenoAtom.Terminal.UI;
 using XenoAtom.Terminal.UI.Controls;
-using XenoAtom.Terminal.UI.DataGrid;
 
 namespace FSWatcherEngineEvent.UI;
 
-#pragma warning disable IDE0290 // bindable partials can't be initialized in primary ctor
-
-internal sealed partial class EditFileSystemWatcherViewModel
-{
-    public EditFileSystemWatcherViewModel(IEnumerable<FileSystemWatcherSubscription> fileSystemWatchers)
-        => this.FileSystemWatchers = [.. fileSystemWatchers.Select(v => new FileSystemWatcherSubscriptionViewModel(v))];
-
-    public void MakeDatagridDocument()
-    {
-        this.FileSystemWatcherSubscriptionDocument = new DataGridListDocument<FileSystemWatcherSubscriptionViewModel>()
-            .AddColumn(FileSystemWatcherSubscriptionViewModel.Accessor.SourceIdentifier)
-            .AddColumn(FileSystemWatcherSubscriptionViewModel.Accessor.Path);
-
-        foreach (var row in this.FileSystemWatchers)
-            this.FileSystemWatcherSubscriptionDocument.AddRow(row);
-    }
-
-    [Bindable]
-    public partial DataGridListDocument<FileSystemWatcherSubscriptionViewModel> FileSystemWatcherSubscriptionDocument { get; set; }
-
-    [Bindable]
-    public partial FileSystemWatcherSubscriptionViewModel[] FileSystemWatchers { get; set; }
-}
-
-internal sealed partial class FileSystemWatcherSubscriptionViewModel
+public sealed partial class FileSystemWatcherSubscriptionViewModel : IDisposable
 {
     private readonly FileSystemWatcherSubscription fileSystemWatcherSubscription;
 
@@ -45,10 +21,16 @@ internal sealed partial class FileSystemWatcherSubscriptionViewModel
         this.Path = fileSystemWatcherSubscription.Path;
         this.Filters = string.Join(", ", this.fileSystemWatcherSubscription.FileSystemWatcher.Filters);
         this.IncludeSubdirectories = this.fileSystemWatcherSubscription.FileSystemWatcher.IncludeSubdirectories;
+        this.Events = [];
 
         this.NotifyFiltersItems = Enum.GetValues<NotifyFilters>();
-        this.NotifyFiltersSelected = Enum.GetValues<NotifyFilters>().Select(ev => this.fileSystemWatcherSubscription.FileSystemWatcher.NotifyFilter.HasFlag(ev)).ToArray();
+        this.NotifyFiltersSelected = [.. Enum.GetValues<NotifyFilters>().Select(ev => this.fileSystemWatcherSubscription.FileSystemWatcher.NotifyFilter.HasFlag(ev))];
+
+        this.UpdateCommandText();
+        this.fileSystemWatcherSubscription.GeneratedEvent += this.UpdateEvents;
     }
+
+    public void Dispose() => this.fileSystemWatcherSubscription.GeneratedEvent -= this.UpdateEvents;
 
     [Bindable]
     public partial string SourceIdentifier { get; set; }
@@ -71,6 +53,14 @@ internal sealed partial class FileSystemWatcherSubscriptionViewModel
     [Bindable]
     public partial bool[] NotifyFiltersSelected { get; set; }
 
+    [Bindable]
+    public partial string CommandText { get; set; }
+
+    [Bindable]
+    public partial List<FileSystemEventArgs> Events { get; set; }
+
+    public Action<FileSystemEventArgs> UpdateEventView { get; internal set; }
+
     partial void OnFiltersChanged(string value)
     {
         this.fileSystemWatcherSubscription.FileSystemWatcher.Filters.Clear();
@@ -79,16 +69,30 @@ internal sealed partial class FileSystemWatcherSubscriptionViewModel
         {
             this.fileSystemWatcherSubscription.FileSystemWatcher.Filters.Add(filter);
         }
+
+        this.UpdateCommandText();
     }
 
     partial void OnEnableRaisingEventsChanged(bool value)
-        => this.fileSystemWatcherSubscription.FileSystemWatcher.EnableRaisingEvents = value;
+    {
+        this.fileSystemWatcherSubscription.FileSystemWatcher.EnableRaisingEvents = value;
+        this.UpdateCommandText();
+    }
 
     partial void OnIncludeSubdirectoriesChanged(bool value)
-        => this.fileSystemWatcherSubscription.FileSystemWatcher.IncludeSubdirectories = value;
+    {
+        this.fileSystemWatcherSubscription.FileSystemWatcher.IncludeSubdirectories = value;
+        this.UpdateCommandText();
+    }
 
     partial void OnPathChanged(string value)
-        => this.fileSystemWatcherSubscription.FileSystemWatcher.Path = value;
+    {
+        if (System.IO.Path.Exists(value))
+        {
+            this.fileSystemWatcherSubscription.FileSystemWatcher.Path = value;
+            this.UpdateCommandText();
+        }
+    }
 
     internal void UpdateNotifyFilters(SelectionList<NotifyFilters> list)
     {
@@ -102,5 +106,25 @@ internal sealed partial class FileSystemWatcherSubscriptionViewModel
         // update the file system watcher and the view model's selected notify filters to update the UI
         this.fileSystemWatcherSubscription.FileSystemWatcher.NotifyFilter = newValue;
         this.NotifyFiltersSelected = [.. list.Checked];
+
+        this.UpdateCommandText();
     }
+
+    public void UpdateCommandText()
+    {
+        StringBuilder commandText = new StringBuilder($"New-FileSystemWatcher -{nameof(ModifyingFileSystemWatcherCommandBase.SourceIdentifier)} {this.SourceIdentifier}")
+            .Append(' ')
+            .Append($"-{nameof(NewFileSystemWatcherCommand.Path)} \"{this.fileSystemWatcherSubscription.FileSystemWatcher.Path}\"")
+            .Append(' ')
+            .Append($"-{nameof(NewFileSystemWatcherCommand.IncludeSubdirectories)}:${this.fileSystemWatcherSubscription.FileSystemWatcher.IncludeSubdirectories}")
+            .Append(' ')
+            .Append($"-{nameof(NewFileSystemWatcherCommand.Filters)} \"{string.Join("\",\"", this.fileSystemWatcherSubscription.FileSystemWatcher.Filters)}\"")
+            .Append(' ')
+            .Append($"-{nameof(NewFileSystemWatcherCommand.NotifyFilter)} {this.fileSystemWatcherSubscription.FileSystemWatcher.NotifyFilter}")
+            .Append(' ');
+
+        this.CommandText = commandText.ToString();
+    }
+
+    private void UpdateEvents(object sender, FileSystemEventArgs e) => this.UpdateEventView?.Invoke(e);
 }

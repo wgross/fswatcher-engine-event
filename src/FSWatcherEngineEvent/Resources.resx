@@ -133,7 +133,7 @@
     <value>Source Identifier:</value>
   </data>
   <data name="Editor.Title" xml:space="preserve">
-    <value>Edit "{0}"</value>
+    <value>Edit</value>
   </data>
   <data name="Editor.EnableRaisingEvents" xml:space="preserve">
     <value>Enable Raising Events:</value>
@@ -161,5 +161,11 @@
   </data>
   <data name="Editor.NotifyFilters" xml:space="preserve">
     <value>Notify Filters:</value>
+  </data>
+  <data name="Trace.Clear" xml:space="preserve">
+    <value>Clear Trace</value>
+  </data>
+  <data name="Trace.Title" xml:space="preserve">
+    <value>Trace</value>
   </data>
 </root>

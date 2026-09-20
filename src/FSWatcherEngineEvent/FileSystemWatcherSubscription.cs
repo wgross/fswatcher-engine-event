@@ -108,6 +108,8 @@ public sealed class FileSystemWatcherSubscription
             sender: this.FileSystemWatcher,
             args: null,
             extraData: PSObject.AsPSObject(eventArgs.AsReadOnly()));
+
+        this.RaiseGeneratedEvents(eventArgs);
     }
 
     private void GenerateEvent(FileSystemEventArgs eventArgs)
@@ -117,6 +119,8 @@ public sealed class FileSystemWatcherSubscription
             sender: this.FileSystemWatcher,
             args: null,
             extraData: PSObject.AsPSObject(eventArgs));
+
+        this.RaiseGeneratedEvent(eventArgs);
     }
 
     private static Action<FileSystemEventArgs> Throttle(Action<List<FileSystemEventArgs>> action, TimeSpan interval)
@@ -186,4 +190,29 @@ public sealed class FileSystemWatcherSubscription
             });
         };
     }
+
+    #region Trace the generated events internally
+
+    internal event EventHandler<FileSystemEventArgs> GeneratedEvent;
+
+    private void RaiseGeneratedEvents(List<FileSystemEventArgs> eventArgs)
+    {
+        if (this.GeneratedEvent is { } generatedEvent)
+        {
+            foreach (var e in eventArgs)
+            {
+                generatedEvent(this, e);
+            }
+        }
+    }
+
+    private void RaiseGeneratedEvent(FileSystemEventArgs eventArgs)
+    {
+        if (this.GeneratedEvent is { } generatedEvent)
+        {
+            generatedEvent(this, eventArgs);
+        }
+    }
+
+    #endregion Trace the generated events internally
 }

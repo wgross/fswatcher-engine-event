@@ -1,6 +1,6 @@
 @{
     RootModule = 'FSWatcherEngineEvent.dll'
-    ModuleVersion = '2.0.0'
+    ModuleVersion = '2.1.0'
     GUID = 'cea9a314-3e4c-4080-9a0b-5a867efa61f3'
     Author = 'github.com/wgross'
     Copyright = '(c) github.com/wgross. All rights reserved.'

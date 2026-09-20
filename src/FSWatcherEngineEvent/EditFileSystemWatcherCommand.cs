@@ -1,5 +1,4 @@
 ﻿using FSWatcherEngineEvent.UI;
-using System.IO;
 using System.Management.Automation;
 using XenoAtom.Terminal;
 using XenoAtom.Terminal.UI;
@@ -9,15 +8,32 @@ using XenoAtom.Terminal.UI.Styling;
 namespace FSWatcherEngineEvent;
 
 [Cmdlet(VerbsData.Edit, nameof(FileSystemWatcher))]
-public sealed class EditFileSystemWatcherCommand : FileSystemWatcherCommandBase
+public sealed class EditFileSystemWatcherCommand : ModifyingFileSystemWatcherCommandBase
 {
+    [Parameter(ValueFromPipeline = true)]
+    public FileSystemWatcherState FileSystemWatcher { get; set; }
+
     protected override void ProcessRecord()
     {
+        if (this.SourceIdentifier is { } sourceIdentifier && FileSystemWatchers.TryGetValue(sourceIdentifier, out var _1))
+        {
+            EditFileSystemWatcher(_1);
+        }
+        else if (FileSystemWatchers.TryGetValue(this.FileSystemWatcher.SourceIdentifier, out var _2))
+        {
+            EditFileSystemWatcher(_2);
+        }
+    }
+
+    private static void EditFileSystemWatcher(FileSystemWatcherSubscription fileSystemWatcherSubscription)
+    {
+        using var fileSystemWatcherViewModel = new FileSystemWatcherSubscriptionViewModel(fileSystemWatcherSubscription);
+        var fileSystemWatcherView = new EditFileSystemwatcherSubscriptionView(fileSystemWatcherViewModel);
+
         using var terminal = Terminal.Open();
-        using var fileSystemWatcherUi = new EditFileSystemWatcherView(new EditFileSystemWatcherViewModel(FileSystemWatchers.Values));
 
         Terminal.Run(
-            visual: MakeFullScreenUi(fileSystemWatcherUi),
+            visual: MakeFullScreenUi(fileSystemWatcherView.CreateEditorCommandPreviewAndTrace()),
             onUpdate: () => TerminalLoopResult.Continue);
     }
 

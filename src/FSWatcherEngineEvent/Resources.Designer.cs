@@ -151,7 +151,7 @@ namespace FSWatcherEngineEvent {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Edit &quot;{0}&quot;.
+        ///   Looks up a localized string similar to Edit.
         /// </summary>
         public static string Editor_Title {
             get {
@@ -192,6 +192,24 @@ namespace FSWatcherEngineEvent {
         public static string Error_SourceIdentifierAlreadyInUse {
             get {
                 return ResourceManager.GetString("Error.SourceIdentifierAlreadyInUse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clear Trace.
+        /// </summary>
+        public static string Trace_Clear {
+            get {
+                return ResourceManager.GetString("Trace.Clear", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Trace.
+        /// </summary>
+        public static string Trace_Title {
+            get {
+                return ResourceManager.GetString("Trace.Title", resourceCulture);
             }
         }
     }
